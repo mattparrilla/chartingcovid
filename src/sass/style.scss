@@ -1,0 +1,10 @@
+@use "palette";
+
+html {
+  font-family: open-sans, sans-serif;
+  font-weight: 400;
+  color: palette.$neutral_0;
+  background: palette.$neutral_9;
+  margin: 0;
+  font-size: 62.5%;
+}

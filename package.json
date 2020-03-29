@@ -1,0 +1,41 @@
+{
+  "name": "chartingcovid",
+  "version": "1.0.0",
+  "description": "Helpful charts for understanding covid-19",
+  "main": "index.js",
+  "scripts": {
+    "webpack_watch": "webpack --watch",
+    "webpack": "webpack --mode='production' --config webpack.production.config.js",
+    "sass": "sass src/sass/style.scss static/css/style.css",
+    "sass_watch": "sass --watch src/sass/style.scss static/css/style.css",
+    "flask_watch": "export FLASK_APP=app.py && export FLASK_ENV=development && flask run",
+    "freeze": "npm run webpack && npm run sass && python app.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattparrilla/chartingcovid.git"
+  },
+  "dependencies": {
+    "@gfx/zopfli": "^1.0.14",
+    "compression-webpack-plugin": "^3.1.0",
+    "npm": "^6.13.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.7",
+    "@babel/preset-env": "^7.8.7",
+    "babel-loader": "^8.0.6",
+    "sass": "^1.25.0",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  },
+  "keywords": [
+    "covid",
+    "coronavirus"
+  ],
+  "author": "matt parrilla and brian holdefehr",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mattparrilla/chartingcovid/issues"
+  },
+  "homepage": "https://chartingcovid"
+}

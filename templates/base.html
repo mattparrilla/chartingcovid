@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="@mattparrilla and @BrianHoldefehr">
+  <meta name="description" content="{{ description }}"
+
+  <!-- Social Media Tags -->
+  <meta property="og:title" content="{{ title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:url" content="{{ url_prefix }}{{ url }}">
+  <meta property="fb:app_id" content="1189898324735691">
+  <meta property="og:type" content="website">
+
+  {# TODO: add images #}
+  <meta property="og:image" content="{{ social_img }}"
+  <meta name="twitter:image" content="{{ social_img }}">
+
+  <meta name="twitter:title" content="{{ title }}">
+  <meta name="twitter:description" content="{{ description }}">
+  <meta name="twitter:card" content="{% if social_img %}summary_large_image{% else %}summary{% endif %}">
+
+  <link href="{{ url_for('static', filename='css/style.css') }}?{{ timestamp }}" rel="stylesheet">
+  {# TODO: add favicon #}
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}?{{ timestamp }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.ico') }}?{{ timestamp }}">
+
+  {# TODO: add GA #}
+</head>
+<body>
+  <h1>Charting COVID-19</h1>
+  <div id="js_map"></div>
+  <div id="js_trend_chart"></div>
+  <div id="js_table"></div>
+  <script src="{{ url_for('static', filename='js/index.js') }}?{{ timestamp }}"></script>
+</body>
+</html>
