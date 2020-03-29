@@ -9,7 +9,8 @@
     "sass": "sass src/sass/style.scss static/css/style.css",
     "sass_watch": "sass --watch src/sass/style.scss static/css/style.css",
     "flask_watch": "export FLASK_APP=app.py && export FLASK_ENV=development && flask run",
-    "freeze": "npm run webpack && npm run sass && python app.py"
+    "freeze": "npm run webpack && npm run sass && python app.py",
+    "deploy": "python push_to_s3.py --directory dist --bucket charting-covid-prod"
   },
   "repository": {
     "type": "git",
