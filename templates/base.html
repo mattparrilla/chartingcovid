@@ -23,16 +23,21 @@
   <meta name="twitter:card" content="{% if social_img %}summary_large_image{% else %}summary{% endif %}">
 
   <link href="{{ url_for('static', filename='css/style.css') }}?{{ timestamp }}" rel="stylesheet">
-  {# TODO: add favicon #}
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}?{{ timestamp }}">
 
-  {# TODO: add GA #}
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-162175067-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-162175067-1');
+  </script>
 </head>
 <body>
-  <h1>Charting COVID-19</h1>
-  <div id="js_map"></div>
-  <div id="js_trend_chart"></div>
-  <div id="js_table"></div>
+  {% block content %}
+  {% endblock %}
   <script src="{{ url_for('static', filename='js/index.js') }}?{{ timestamp }}"></script>
 </body>
 </html>
