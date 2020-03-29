@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask_frozen import Freezer
 from flask import Flask, render_template
 
@@ -19,6 +21,7 @@ def index():
     return render_template("index.html",
         url_prefix=url_prefix,
         description=description,
+        timestamp=datetime.utcnow().timestamp(),
         title=title)
 
 
