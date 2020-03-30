@@ -1,8 +1,9 @@
 import * as d3 from 'd3';
-import { fetchData, sortDateString, filterOutCounties } from './utilities';
+import { sortDateString, filterOutCounties } from './utilities';
 
-export async function getTrendChartData(fips) {
-  const [fipsData, casesByDate] = await fetchData();
+export async function getTrendChartData(data, fips) {
+  const fipsData = await data.fips;
+  const casesByDate = await data.cases;
   const dates = sortDateString(casesByDate);
 
   // if no fips, we want whole country
@@ -25,20 +26,20 @@ export async function getTrendChartData(fips) {
   }));
 }
 
-export default async function initTrendChart(fips) {
+export default async function initTrendChart(data, fips) {
   const margin = { top: 30, right: 40, bottom: 30, left: 70 };
   const height = 500;
   const width = 1000;
 
-  const data = await getTrendChartData(fips);
+  const chartData = await getTrendChartData(data, fips);
 
   const x = d3.scaleBand()
-    .domain(d3.range(data.length))
+    .domain(d3.range(chartData.length))
     .range([margin.left, width - margin.right])
     .padding(0.1);
 
   const y = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.cases)]).nice()
+      .domain([0, d3.max(chartData, d => d.cases)]).nice()
       .range([height - margin.bottom, margin.top]);
 
   const yAxis = g => g
@@ -50,14 +51,14 @@ export default async function initTrendChart(fips) {
         .attr("y", 10)
         .attr("fill", "currentColor")
         .attr("text-anchor", "start")
-        .text(data.y));
+        .text(chartData.y));
 
   const xAxis = g => g
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .attr("class", "x_axis")
     .call(d3.axisBottom(x)
       .tickSizeOuter(0)
-      .tickFormat(i => d3.timeFormat("%b %d")(d3.timeParse("%Y-%m-%d")(data[i].date))));
+      .tickFormat(i => d3.timeFormat("%b %d")(d3.timeParse("%Y-%m-%d")(chartData[i].date))));
 
   const svg = d3.select("#js_trend_chart")
     .append("svg")
@@ -66,7 +67,7 @@ export default async function initTrendChart(fips) {
   svg.append("g")
       .attr("fill", "steelblue")
     .selectAll("rect")
-    .data(data)
+    .data(chartData)
     .join("rect")
       .attr("x", (d, i) => x(i))
       .attr("y", d => y(d.cases))
@@ -81,7 +82,7 @@ export default async function initTrendChart(fips) {
 
   // only show every 5 ticks, including the latest
   d3.selectAll(".x_axis .tick").style("display", (d, i) => {
-    const reverseIdx = data.length - 1 - i;
+    const reverseIdx = chartData.length - 1 - i;
     return reverseIdx % 5 ? "none" : "initial";
   });
 }

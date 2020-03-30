@@ -1,4 +1,4 @@
-import { fetchData, filterOutCounties, sortDateString } from './utilities';
+import { filterOutCounties, sortDateString } from './utilities';
 
 // Used to store our table data for sorting, etc
 let tableData;
@@ -21,7 +21,33 @@ function sortRowsByColumn(sortColumn) {
 }
 
 // Put data in table and sort. Order: State, Cases, Cases Per Capita, Growth Rate
-function updateTable(sortColumn = "state", descendingSort = true) {
+async function updateTable(data, state, countyFips, sortColumn = "state", descendingSort = true) {
+  const casesByDate = await data.cases;
+  const fipsData = await data.fips;
+  const dates = sortDateString(casesByDate);
+  const today = casesByDate[dates[dates.length - 1]];
+
+  // if we are at country level
+  if (state == null) {
+    const stateData = filterOutCounties(fipsData);
+
+    // Merge FIPS data with case data and calculate
+    tableData = stateData.map(stateFips => ({
+      ...stateFips,
+      ...today[stateFips.fips],
+      // using underscores to match style of source data
+      cases_per_capita: today[stateFips.fips].cases / stateFips.population
+    }));
+  } else {
+    const dataByState = Object.keys(fipsData).filter(item => (
+      fipsData[item].state.replace(/\s/g, '-').toLowerCase() === state));
+
+    tableData = dataByState.map(county => ({
+      ...fipsData[county],
+      ...today[county],
+      cases_per_capita: today[county].cases / county.population
+    }));
+  }
   // sort rows in place
   tableData.sort(sortRowsByColumn(sortColumn));
 
@@ -33,7 +59,8 @@ function updateTable(sortColumn = "state", descendingSort = true) {
   // Only show county column header if we are looking at county level data
   document.getElementById("county_header").style.display = tableData[0].county ? "table-cell" : "none";
 
-  // TODO: only show state if we are looking at whole country
+  // Only show state if we are looking at whole country
+  document.getElementById("state_header").style.display = state ? "none" : "table-cell";
 
   const tbody = document.getElementById("js_tbody");
   tbody.innerHTML = tableData.map(row => `
@@ -51,13 +78,7 @@ function updateTable(sortColumn = "state", descendingSort = true) {
     </tr>`).join('');
 }
 
-export default async function initDataTable(fips) {
-  const [fipsData, casesByDate] = await fetchData();
-  const dates = sortDateString(casesByDate);
-  const today = casesByDate[dates[dates.length - 1]];
-  const stateData = filterOutCounties(fipsData);
-
-
+export default function initDataTable(data, state, countyFips) {
   // Add handlers to sort on column header click
   const tableHeaders = document.querySelectorAll("#js_thead th");
   tableHeaders.forEach(th => {
@@ -71,20 +92,10 @@ export default async function initDataTable(fips) {
 
       descendingSort = !descendingSort;
       th.classList.add(descendingSort ? "descending" : "ascending");
-      updateTable(th.dataset.column, descendingSort);
+      updateTable(data, state, countyFips, th.dataset.column, descendingSort);
     });
   });
 
-  if (fips == null) {
-    // Merge FIPS data with case data and calculate
-    tableData = stateData.map(stateFips => ({
-      ...stateFips,
-      ...today[stateFips.fips],
-      // using underscores to match style of source data
-      cases_per_capita: today[stateFips.fips].cases / stateFips.population
-    }));
-  }
-
   // init our table
-  updateTable("cases");
+  updateTable(data, state, countyFips, "cases");
 }
