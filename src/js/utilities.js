@@ -23,6 +23,7 @@ export function filterOutCounties(data) {
     }, []);
 }
 
+// Sort dates in ascending order
 export function sortDateString(dates) {
-  return Object.keys(dates).sort((firstEl, secondEl) => new Date(secondEl) - new Date(firstEl));
+  return Object.keys(dates).sort((firstEl, secondEl) => new Date(firstEl) - new Date(secondEl));
 }
