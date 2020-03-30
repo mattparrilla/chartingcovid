@@ -1,7 +1,7 @@
 import { json } from 'd3';
 
-export async function countyToFips(state, county) {
-  const fips = await json("/data/fips_data.json");
+export async function countyToFips(fipsData, state, county) {
+  const fips = await fipsData;
   return Object.keys(fips).find(item => (
     // State in FIPS json is ex: New Jersey
     fips[item].state.replace(/\s/g, "-").toLowerCase() === state
@@ -10,8 +10,8 @@ export async function countyToFips(state, county) {
   ));
 }
 
-export async function stateToFips(state) {
-  const fips = await json("/data/fips_data.json");
+export async function stateToFips(fipsData, state) {
+  const fips = await fipsData;
   return Object.keys(fips).find(item => (
     fips[item].state.replace(/\s/g, '-').toLowerCase() === state
   ));
