@@ -24,11 +24,8 @@ def read_covid_file(
     """
     # Offsets of the data within the file
     DATE = 0
-    FIPS = 3
-    CASES = 4
-    if is_state_file:
-        FIPS = 2
-        CASES = 3
+    FIPS = 2 if is_state_file else 3
+    CASES = 3 if is_state_file else 4
 
     with open(filename) as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
