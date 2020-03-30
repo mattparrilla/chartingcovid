@@ -6,12 +6,22 @@ import json
 from statistics import mean
 
 
-def read_fip_data(filename):
-    pass
-
-
 def read_covid_file(
         filename, date_data, moving_average_days, is_state_file=False):
+    """
+    For a supplied csv file, containing either state or county covid data,
+    this function will output a date-keyed dict in the format:
+      {"YYYY-MM-DD":
+         {"FIPS_ID": {"cases": X, "moving_average": X.X}, ...}
+       ...
+      }
+
+      Example:
+      {"2020-03-27":
+         {"56043": {"cases": 12, "moving_average": 0.19}, ...}
+       ...
+      }
+    """
     # Offsets of the data within the file
     date = 0
     fips = 3
@@ -83,11 +93,11 @@ def generate_json(
     empty_data = defaultdict(dict)
     state_data = read_covid_file(
         states_file, empty_data, moving_average_days, is_state_file=True)
-    all_date_data = read_covid_file(
+    state_and_county_data = read_covid_file(
         counties_file, state_data, moving_average_days)
 
     with open(output_file, "w") as output:
-        json.dump(all_date_data, output)
+        json.dump(state_and_county_data, output)
 
 
 parser = argparse.ArgumentParser()
