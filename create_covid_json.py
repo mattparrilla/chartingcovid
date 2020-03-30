@@ -124,16 +124,24 @@ def read_covid_file(filename, output_data, moving_average_days,
 
             # Find the growth in daily new cases for the previous
             # moving_average_days days.
+            # If any days have 0 increase, we skip, and assign a growth_factor
+            # of 0. This indicates the county is not growing or experiencing
+            # negative growth right now. Imperfect, but...
             growth_in_daily_new_cases = []
-            for i in range(len(increases) - 1):
-                growth_in_daily_new_cases.append(
-                    increases[i] / increases[i + 1])
+            if all(increases):
+                for i in range(len(increases) - 1):
+                    growth_in_daily_new_cases.append(
+                        increases[i] / increases[i + 1])
+            else:
+                # Add a 0 just to avoid an error below. The growth_factor will
+                # be 0.
+                growth_in_daily_new_cases = [0]
 
             if output_fips_first:
-                output_data[fips_id][date_string]['avg_growth'] = mean(
+                output_data[fips_id][date_string]['growth_factor'] = mean(
                     growth_in_daily_new_cases)
             else:
-                output_data[date_string][fips_id]['avg_growth'] = mean(
+                output_data[date_string][fips_id]['growth_factor'] = mean(
                     growth_in_daily_new_cases)
 
     return output_data
