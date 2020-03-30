@@ -1,3 +1,16 @@
+"""
+Script to generate JSON data from NYTs state and county covid case data.
+
+Args:
+
+    --county_input: The file path to NYT county covid case data csv.
+    --state_input: The file path to NYT state covid case data csv.
+    --output_file: The path to file to output JSON to.
+    --moving_average_days: The number of preceding days of case data to average
+      when calculating the moving average of daily case growth.
+    --output_fips_first: If true, the output JSON top level key will be a FIPS
+      geographic entity code for the state/county. Otherwise, will be the date.
+"""
 import argparse
 from collections import defaultdict
 import csv
@@ -34,7 +47,8 @@ def read_covid_file(filename, output_data, moving_average_days,
        ...
       }
     """
-    # Offsets of the data within the file
+    # Offsets of the data within the file.
+    # Example: 2020-03-28,Snohomish,Washington,53061,912,23
     DATE = 0
     FIPS = 2 if is_state_file else 3
     CASES = 3 if is_state_file else 4
@@ -46,10 +60,9 @@ def read_covid_file(filename, output_data, moving_average_days,
             datetime.strptime(csv_list[1][DATE], '%Y-%m-%d').date()
         latest_date = datetime.strptime(
             csv_list[-1][DATE], '%Y-%m-%d').date()
-        # Each entry is an empty list with length of total days we can
-        # possibly have data for.
-        # This will store case count for each day chronologically moving
-        # backwards from the latest date in the dataset.
+        # Create an empty list for each entry with length being the total days
+        # we might have data for.
+        # This will store case count in reverse chronological order.
         total_days_of_data = (latest_date - earliest_date).days + 1
         inverse_chronological_case_data = \
             defaultdict(lambda: [None]*total_days_of_data)
@@ -144,8 +157,10 @@ parser.add_argument("--moving_average_days",
     help="The number of preceding days' case number changes to average.",
     default=5, type=int)
 parser.add_argument("--output_fips_first",
-    help="Output JSON will be top-level keyed by FIPS if True. Date if False.",
-    default=False, type=bool)
+    help="Output JSON will be top-level keyed by FIPS if this arg is passed. "
+         "If this arg is not passed, the top-level key of the output will be "
+         "the date.",
+    action="store_true")
 args = parser.parse_args()
 
 generate_json(args.county_input, args.state_input, args.output_file,
