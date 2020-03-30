@@ -23,20 +23,20 @@ def read_covid_file(
       }
     """
     # Offsets of the data within the file
-    date = 0
-    fips = 3
-    cases = 4
+    DATE = 0
+    FIPS = 3
+    CASES = 4
     if is_state_file:
-        fips = 2
-        cases = 3
+        FIPS = 2
+        CASES = 3
 
     with open(filename) as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
         csv_list = list(reader)
         earliest_date = \
-            datetime.strptime(csv_list[1][date], '%Y-%m-%d').date()
+            datetime.strptime(csv_list[1][DATE], '%Y-%m-%d').date()
         latest_date = datetime.strptime(
-            csv_list[-1][date], '%Y-%m-%d').date()
+            csv_list[-1][DATE], '%Y-%m-%d').date()
         # Each entry is an empty list with length of total days we can
         # possibly have data for.
         # This will store case count for each day chronologically moving
@@ -50,14 +50,14 @@ def read_covid_file(
             # {"2020-03-27":
             #    {"56043": {"cases": 12}, ...}
             # }
-            date_data[row[date]][row[fips]] = {"cases": int(row[cases] or 0)}
+            date_data[row[DATE]][row[FIPS]] = {"cases": int(row[CASES] or 0)}
 
             # Store the number of cases in the fips list at the position which
             # represents the number of days since the latest (current) date.
             this_date = datetime.strptime(row[0], '%Y-%m-%d').date()
             day_offset = (latest_date - this_date).days
-            fips_row = fips_list_data[row[fips]]
-            fips_row[day_offset] = int(row[cases] or 0)
+            fips_row = fips_list_data[row[FIPS]]
+            fips_row[day_offset] = int(row[CASES] or 0)
 
     # Add the daily moving average data.
     # This is the percent daily moving average in new cases over the prior
