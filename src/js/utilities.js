@@ -1,5 +1,22 @@
 import { json } from 'd3';
 
+export async function countyToFips(state, county) {
+  const fips = await json("/data/fips_data.json");
+  return Object.keys(fips).find(item => (
+    // State in FIPS json is ex: New Jersey
+    fips[item].state.replace(/\s/g, "-").toLowerCase() === state
+    // County in FIPS json is ex: Bergen County
+      && fips[item].county.replace(" County", "").replace(/\s/g, "-").toLowerCase() === county
+  ));
+}
+
+export async function stateToFips(state) {
+  const fips = await json("/data/fips_data.json");
+  return Object.keys(fips).find(item => (
+    fips[item].state.replace(/\s/g, '-').toLowerCase() === state
+  ));
+}
+
 export function fetchData() {
   return Promise.all([
     json("/data/fips_data.json"),

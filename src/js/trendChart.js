@@ -18,14 +18,19 @@ export async function getTrendChartData(fips) {
       }, 0)
     }));
   }
-  return [];
+  // Get data by FIPS
+  return dates.map(date => ({
+    date,
+    cases: (casesByDate[date] && casesByDate[date][fips] && casesByDate[date][fips].cases) || 0
+  }));
 }
-export default async function initTrendChart() {
+
+export default async function initTrendChart(fips) {
   const margin = { top: 30, right: 40, bottom: 30, left: 70 };
   const height = 500;
   const width = 1000;
 
-  const data = await getTrendChartData();
+  const data = await getTrendChartData(fips);
 
   const x = d3.scaleBand()
     .domain(d3.range(data.length))
