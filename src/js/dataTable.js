@@ -35,10 +35,10 @@ function sortRowsByColumn(sortColumn) {
 }
 
 
-// Put data in table: State, Cases, Cases Per Capita, Growth Rate and sort
+// Put data in table and sort. Order: State, Cases, Cases Per Capita, Growth Rate
 function updateTable(rows, sortColumn = "state", descendingSort = true) {
   // sort rows in place
-  rows.sort(sortRowsByColumn(sortColumn, descendingSort));
+  rows.sort(sortRowsByColumn(sortColumn));
 
   // TODO: to improve performance, could do this in sortRowsByColumn
   if (!descendingSort) {
@@ -70,7 +70,7 @@ export default async function initDataTable() {
   const today = casesByDate[dates[0]];
   const stateData = filterOutCounties(fipsData);
 
-  // Add case data to state population data (and calculate per capita)
+  // Merge FIPS data with case data and calculate
   const mergedStateData = stateData.map(stateFips => ({
     ...stateFips,
     ...today[stateFips.fips],
@@ -87,5 +87,6 @@ export default async function initDataTable() {
     });
   });
 
+  // init our table
   updateTable(mergedStateData, "cases");
 }
