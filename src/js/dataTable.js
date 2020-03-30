@@ -22,29 +22,41 @@ function sortDateString(dates) {
 
 function sortRowsByColumn(sortColumn) {
   const intColumns = ["cases"];
-  const floatColumns = ["casesPerCapita", "growthRate"];
+  const floatColumns = ["cases_per_capita", "moving_avg"];
   return function sortRows(a, b) {
     if (intColumns.includes(sortColumn)) {
       return parseInt(b[sortColumn], 10) - parseInt(a[sortColumn], 10);
     } else if (floatColumns.includes(sortColumn)) {
       return parseFloat(b[sortColumn]) - parseFloat(a[sortColumn]);
     } else {
-      return a > b;
+      return a[sortColumn] > b[sortColumn] ? 1 : -1;
     }
   };
 }
 
-function updateTable(rows, sortColumn = "state") {
+
+// Put data in table: State, Cases, Cases Per Capita, Growth Rate and sort
+function updateTable(rows, sortColumn = "state", descendingSort = true) {
   // sort rows in place
-  rows.sort(sortRowsByColumn(sortColumn));
+  rows.sort(sortRowsByColumn(sortColumn, descendingSort));
+
+  // TODO: to improve performance, could do this in sortRowsByColumn
+  if (!descendingSort) {
+    rows.reverse();
+  }
 
   const tbody = document.getElementById("js_tbody");
   tbody.innerHTML = rows.map(row => `
     <tr>
       <td>${row.state}</td>
-      <td>${row.cases}</td>
-      <td>${row.cases / row.population}</td>
-      <td>${row.moving_avg}</td>
+      <td>${row.cases.toLocaleString()}</td>
+      <td>${(row.cases / row.population).toLocaleString(undefined, {
+        minimumFractionDigits: 5
+      })}</td>
+      <td>${(row.moving_avg).toLocaleString(undefined, {
+        style: "percent",
+        minimumFractionDigits: 2,
+      })}</td>
     </tr>`).join('');
 }
 
@@ -62,10 +74,18 @@ export default async function initDataTable() {
   const mergedStateData = stateData.map(stateFips => ({
     ...stateFips,
     ...today[stateFips.fips],
-    casesPerCapita: today[stateFips.fips].cases / stateFips.population
+    // using underscores to match style of source data
+    cases_per_capita: today[stateFips.fips].cases / stateFips.population
   }));
 
-  updateTable(mergedStateData, "cases");
+  // Add handlers to sort on column header click
+  document.querySelectorAll("#js_thead th").forEach(th => {
+    let descendingSort = false;
+    th.addEventListener("click", () => {
+      descendingSort = !descendingSort;
+      updateTable(mergedStateData, th.id, descendingSort);
+    });
+  });
 
-  // Put data in table: State, Cases, Cases Per Capita, Growth Rate
+  updateTable(mergedStateData, "cases");
 }
