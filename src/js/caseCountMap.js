@@ -1,49 +1,64 @@
 import * as d3 from 'd3';
-import topojson from 'topojson';
+import * as topojson from 'topojson-client'
+import { fetchData, filterOutStates } from './utilities';
 
-export default async function initCaseCountMap() {
-  map = {
-    const viewportWidth = Math.max(
-      document.documentElement.clientWidth, window.innerWidth || 0);
-    const mapWidth = viewportWidth * 0.9;
-    const mapHeight = mapWidth * 0.625;
+var svg;
 
-    const svg = d3.create("svg")
-        .attr("viewBox", [0, 0, mapWidth, mapHeight]);
+function drawMap() {
+  svg = d3.select("#js_map")
+    .append("svg")
+    .attr("viewBox", [0, 0, 975, 610]);
+}
 
-    // svg.append("g")
-    //     .attr("transform", "translate(610,20)")
-    //     .append(() => legend({color, title: data.title, width: 260}));
+function updateMap(countyData, states, caseData, color) {
+    const path = d3.geoPath();
 
     svg.append("g")
       .selectAll("path")
-      .data(topojson.feature(us, us.objects.counties).features)
+      .data(topojson.feature(countyData, countyData.objects.counties).features)
       .join("path")
-        .attr("fill", function(d) {
-          color(data.get(d.id));
-        })
-        .attr("d", path)
-      .append("title")
-        .text(d => `${d.properties.name}, ${states.get(d.id.slice(0, 2)).name}
-  ${format(data.get(d.id))}`);
+        .attr("fill", d => color(caseData[d.id] ? Math.log(caseData[d.id].cases) : 0))
+        .attr("d", path);
 
     svg.append("path")
-        .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+        .datum(topojson.mesh(
+          countyData, countyData.objects.states, (a, b) => a !== b))
         .attr("fill", "none")
         .attr("stroke", "white")
         .attr("stroke-linejoin", "round")
         .attr("d", path);
+}
 
-    return svg.node();
-  }
+function removeStates(caseData, fipsData) {
+  const keys = Object.keys(caseData);
+  keys.forEach(function(key) {
+    if (fipsData[key] == null || fipsData[key].county.length == 0) {
+      delete caseData[key]
+    }
+  });
+}
 
-  const [fipsData, casesByDate, countyData] = await fetchData(
-    "/data/fips_data.json",
-    "/data/covid_cases_by_date.json",
-    "/data/counties-albers-10m.json",
-  );
-  states = new Map(countyData.objects.states.geometries.map(
+function perCapita(caseData, fipsData) {
+  const keys = Object.keys(caseData);
+  keys.forEach(function(key) {
+    const population = fipsData[key] && fipsData[key].population;
+    caseData[key].cases = caseData[key].cases / population;
+  });
+  return caseData;
+}
+
+export default async function initCaseCountMap() {
+  drawMap();
+
+  const [fipsData, casesByDate, countyData] = await fetchData();
+  const states = new Map(countyData.objects.states.geometries.map(
     d => [d.id, d.properties]))
-  path = d3.geoPath();
-  color = d3.scaleQuantize([1, 10], d3.schemeOranges[9])
+  const mostRecentData = casesByDate["2020-03-27"];
+  removeStates(mostRecentData, fipsData);
+  const perCapitaCountyData = perCapita(mostRecentData, fipsData);
+  const extent =
+    d3.extent((Object.values(mostRecentData)).map(c => Math.log(c.cases)));
+  const color = d3.scaleQuantize(extent, d3.schemeOranges[9]);
+
+  updateMap(countyData, states, perCapitaCountyData, color);
 }

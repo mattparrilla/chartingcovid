@@ -1,7 +1,11 @@
 import { json } from 'd3';
 
-export function fetchData(filenames) {
-  return Promise.all(filesnames.map(filename => json(filename)));
+export function fetchData() {
+  return Promise.all([
+    json("/data/fips_data.json"),
+    json("/data/covid_cases_by_date.json"),
+    json("/data/counties-albers-10m2.json")
+  ]);
 }
 
 export function filterOutCounties(data) {

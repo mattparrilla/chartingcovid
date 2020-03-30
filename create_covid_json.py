@@ -115,20 +115,26 @@ def read_covid_file(filename, output_data, moving_average_days,
                 # We don't have enough days of data, or have faulty data.
                 continue
 
-            # Find the percentage increase in cases between each of the
-            # preceding moving_average_days days and calculate the average.
-            increase_percents = []
+            # Find the absolute count of new daily cases for the previous
+            # moving_average_days days.
+            increases = []
             for i in range(len(preceding_case_counts) - 1):
-                increase_percents.append((preceding_case_counts[i] -
-                    preceding_case_counts[i + 1]) /
-                        preceding_case_counts[i + 1])
+                increases.append(preceding_case_counts[i] -
+                    preceding_case_counts[i + 1])
+
+            # Find the growth in daily new cases for the previous
+            # moving_average_days days.
+            growth_in_daily_new_cases = []
+            for i in range(len(increases) - 1):
+                growth_in_daily_new_cases.append(
+                    increases[i] / increases[i + 1])
 
             if output_fips_first:
-                output_data[fips_id][date_string]['moving_avg'] = mean(
-                    increase_percents)
+                output_data[fips_id][date_string]['avg_growth'] = mean(
+                    growth_in_daily_new_cases)
             else:
-                output_data[date_string][fips_id]['moving_avg'] = mean(
-                    increase_percents)
+                output_data[date_string][fips_id]['avg_growth'] = mean(
+                    growth_in_daily_new_cases)
 
     return output_data
 
@@ -154,7 +160,7 @@ parser.add_argument("--state_input", help="File path to current state CSV.",
 parser.add_argument("--output_file", help="File path to output JSON file.",
     default="covid_data.json")
 parser.add_argument("--moving_average_days",
-    help="The number of preceding days' case number changes to average.",
+    help="The number of preceding days' growth changes to average.",
     default=5, type=int)
 parser.add_argument("--output_fips_first",
     help="Output JSON will be top-level keyed by FIPS if this arg is passed. "

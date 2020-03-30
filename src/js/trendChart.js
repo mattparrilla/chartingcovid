@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import { fetchData, sortDateString, filterOutCounties } from './utilities';
 
 export async function getTrendChartData(fips) {
-  const [fipsData, casesByDate] = await fetchData();
+  const [fipsData, casesByDate, countyData] = await fetchData();
   const dates = sortDateString(casesByDate);
 
   // if no fips, we want whole country
