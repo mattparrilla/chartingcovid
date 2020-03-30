@@ -3,11 +3,16 @@ import initTrendChart from './trendChart';
 import initDatatTable from './dataTable';
 import { stateToFips, countyToFips } from './utilities';
 
-export const router = new Router({
+const router = new Router({
   mode: 'history'
 });
 
 window.addEventListener("DOMContentLoaded", () => {
+  // TODO: create separate init and update functions for elements, all should
+  // initialize without data
+
+  // TODO: get fetchData promise here, await it in the view block
+
   router.add('', () => {
     initTrendChart();
     initDatatTable();
