@@ -70,7 +70,7 @@ def read_covid_file(filename, output_data, moving_average_days,
         # Skip the initial header line.
         for row in csv_list[1:]:
             if output_fips_first:
-                # output_data is keyed by date, and then FIPS.
+                # output_data is keyed by FIPS, then date
                 # {"56043":
                 #    {"2020-03-27": {"cases": 12}, ...}
                 # }
