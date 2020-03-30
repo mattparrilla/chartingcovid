@@ -1,24 +1,4 @@
-import { json } from 'd3';
-
-function filterOutCounties(data) {
-  return Object.keys(data)
-    .reduce((stateData, fips) => {
-      if (data[fips].county === "") {
-        return [
-          ...stateData,
-          {
-            fips,
-            ...data[fips]
-          }
-        ];
-      }
-      return stateData;
-    }, []);
-}
-
-function sortDateString(dates) {
-  return Object.keys(dates).sort((firstEl, secondEl) => new Date(secondEl) - new Date(firstEl));
-}
+import { fetchData, filterOutCounties, sortDateString } from './utilities';
 
 function sortRowsByColumn(sortColumn) {
   const intColumns = ["cases"];
@@ -36,7 +16,6 @@ function sortRowsByColumn(sortColumn) {
     return a[sortColumn] > b[sortColumn] ? 1 : -1;
   };
 }
-
 
 // Put data in table and sort. Order: State, Cases, Cases Per Capita, Growth Rate
 function updateTable(rows, sortColumn = "state", descendingSort = true) {
@@ -64,13 +43,9 @@ function updateTable(rows, sortColumn = "state", descendingSort = true) {
 }
 
 export default async function initDataTable() {
-  const [fipsData, casesByDate] = await Promise.all([
-    json("/data/fips_data.json"),
-    json("/data/covid_cases_by_date.json")
-  ]);
-
+  const [fipsData, casesByDate] = await fetchData();
   const dates = sortDateString(casesByDate);
-  const today = casesByDate[dates[0]];
+  const today = casesByDate[dates[dates.length - 1]];
   const stateData = filterOutCounties(fipsData);
 
   // Merge FIPS data with case data and calculate
