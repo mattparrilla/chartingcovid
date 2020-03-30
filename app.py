@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask_frozen import Freezer
-from flask import Flask, render_template
+from flask import Flask, render_template, send_from_directory
 
 
 app = Flask(__name__)
@@ -23,6 +23,13 @@ def index():
         description=description,
         timestamp=datetime.utcnow().timestamp(),
         title=title)
+
+
+@app.route("/data/<json_file>")
+def data(json_file):
+    response = send_from_directory('data', filename=json_file)
+    response.headers["Content-Type"] = "application/json"
+    return response
 
 
 if __name__ == "__main__":
