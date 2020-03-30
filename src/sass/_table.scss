@@ -87,3 +87,7 @@ td.number {
 .table tbody > tr:last-child > td {
   border-bottom-width: 0;
 }
+
+tr.highlight {
+  font-weight: bold;
+}

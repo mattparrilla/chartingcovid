@@ -27,7 +27,9 @@ async function updateTable(data, state, countyFips, sortColumn = "state", descen
   const dates = sortDateString(casesByDate);
   const today = casesByDate[dates[dates.length - 1]];
 
-  // if we are at country level
+  // TODO: don't need to munge every time we sort, pull this out
+
+  // Munge data for country level
   if (state == null) {
     const stateData = filterOutCounties(fipsData);
 
@@ -38,14 +40,21 @@ async function updateTable(data, state, countyFips, sortColumn = "state", descen
       // using underscores to match style of source data
       cases_per_capita: today[stateFips.fips].cases / stateFips.population
     }));
+
+  // Munge data for state or county
   } else {
     const dataByState = Object.keys(fipsData).filter(item => (
-      fipsData[item].state.replace(/\s/g, '-').toLowerCase() === state));
+      // filter today's data to give us just counties within current state
+      // regardless of if we have a county selected
+      fipsData[item].state.replace(/\s/g, '-').toLowerCase() === state
+      // filter out the top level state data (county is empty string)
+      && fipsData[item].county));
 
     tableData = dataByState.map(county => ({
-      ...fipsData[county],
+      highlight: countyFips === county,
+      county: fipsData[county].county,
       ...today[county],
-      cases_per_capita: today[county].cases / county.population
+      cases_per_capita: today[county].cases / fipsData[county].population
     }));
   }
   // sort rows in place
@@ -64,11 +73,11 @@ async function updateTable(data, state, countyFips, sortColumn = "state", descen
 
   const tbody = document.getElementById("js_tbody");
   tbody.innerHTML = tableData.map(row => `
-    <tr>
+    <tr ${row.highlight ? 'class="highlight"' : ''}>
       ${row.county ? `<td>${row.county}</td>` : ""}
-      <td>${row.state}</td>
+      ${row.state ? `<td>${row.state}</td>` : ""}
       <td class="number">${row.cases.toLocaleString()}</td>
-      <td class="number">${(row.cases / row.population).toLocaleString(undefined, {
+      <td class="number">${row.cases_per_capita.toLocaleString(undefined, {
         minimumFractionDigits: 5
       })}</td>
       <td class="number">${(row.moving_avg).toLocaleString(undefined, {
