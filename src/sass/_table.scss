@@ -57,8 +57,8 @@ td.number {
 }
 
 .table thead {
-  background-color: #e0e0e0;
-  color: #000;
+  background-color: palette.$neutral_8;
+  color: palette.$neutral_1;
   text-align: center;
   vertical-align: bottom;
 }
@@ -90,4 +90,5 @@ td.number {
 
 tr.highlight {
   font-weight: bold;
+  background-color: palette.$blue_8;
 }
