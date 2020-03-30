@@ -17,6 +17,31 @@
   text-align: center;
 }
 
+th:before,
+th:before {
+  content: "";
+  float: right;
+  height: 2rem;
+  width: 2rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url("/static/icons/descending.svg");
+  opacity: 0.3;
+}
+
+th.ascending:before {
+  background-image: url("/static/icons/ascending.svg");
+}
+
+th.descending:before,
+th.ascending:before {
+  opacity: 1;
+}
+
+th {
+  cursor: pointer;
+}
+
 td.number {
   text-align: right;
 }

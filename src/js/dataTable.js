@@ -13,7 +13,7 @@ function sortRowsByColumn(sortColumn) {
       return parseFloat(b[sortColumn]) - parseFloat(a[sortColumn]);
     }
 
-    return a[sortColumn] > b[sortColumn] ? 1 : -1;
+    return a[sortColumn] < b[sortColumn] ? 1 : -1;
   };
 }
 
@@ -61,10 +61,18 @@ export default async function initDataTable() {
   }));
 
   // Add handlers to sort on column header click
-  document.querySelectorAll("#js_thead th").forEach(th => {
-    let descendingSort = false;
+  const tableHeaders = document.querySelectorAll("#js_thead th");
+  tableHeaders.forEach(th => {
+    let descendingSort = th.classList.contains("descending");
     th.addEventListener("click", () => {
+      // remove sort class from any other element
+      tableHeaders.forEach(header => {
+        header.classList.remove("ascending");
+        header.classList.remove("descending");
+      });
+
       descendingSort = !descendingSort;
+      th.classList.add(descendingSort ? "descending" : "ascending");
       updateTable(mergedStateData, th.dataset.column, descendingSort);
     });
   });
