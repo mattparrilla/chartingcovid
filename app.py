@@ -14,6 +14,7 @@ app.config["FREEZER_DESTINATION"] = "dist"
 url_prefix = "https://chartingcovid.com"
 
 
+# Handle wildcard URLs (anything not defined in this file)
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def index(path):
