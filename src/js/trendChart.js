@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-export default function trendChart() {
+export default function initTrendChart() {
   const margin = { top: 30, right: 0, bottom: 30, left: 40 };
   const height = 500;
   const width = 1000;
