@@ -60,5 +60,5 @@ export default async function initCaseCountMap() {
     d3.extent((Object.values(mostRecentData)).map(c => Math.log(c.cases)));
   const color = d3.scaleQuantize(extent, d3.schemeOranges[9]);
 
-  updateMap(countyData, states, perCapitaCountyData, color);
+  updateMap(countyData, states, mostRecentData, color);
 }
