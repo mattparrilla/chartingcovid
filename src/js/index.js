@@ -1,6 +1,6 @@
 import Router from 'vanilla-router';
 import initTrendChart from './trendChart';
-import initDatatTable from './dataTable';
+import initDataTable from './dataTable';
 import { stateToFips, countyToFips } from './utilities';
 
 const router = new Router({
@@ -15,7 +15,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   router.add('', () => {
     initTrendChart();
-    initDatatTable();
+    initDataTable();
   });
 
   router.add('state/(:any)', async (state) => {
@@ -26,7 +26,7 @@ window.addEventListener("DOMContentLoaded", () => {
       window.alert(`fips for: ${state} not found`);
     }
     initTrendChart(fips);
-    initDatatTable(fips);
+    initDataTable(fips);
   });
 
   router.add('state/(:any)/county/(:any)', async (state, county) => {
@@ -37,7 +37,7 @@ window.addEventListener("DOMContentLoaded", () => {
       window.alert(`fips for: ${county}, ${state} not found`);
     }
     initTrendChart(fips);
-    initDatatTable(fips);
+    initDataTable(fips);
   });
 
   router.addUriListener();
