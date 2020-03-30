@@ -1,5 +1,7 @@
-import trendChart from "./trendChart";
+import initTrendChart from "./trendChart";
+import initDataTable from './dataTable';
 
 window.addEventListener("DOMContentLoaded", () => {
-  trendChart();
+  initTrendChart();
+  initDataTable();
 });

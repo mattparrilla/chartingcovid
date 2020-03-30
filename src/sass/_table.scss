@@ -1,9 +1,13 @@
+@use "palette";
+
 .table {
   /* Remove spacing between table cells (from Normalize.css) */
   border-collapse: collapse;
   border-spacing: 0;
   empty-cells: show;
   border: 1px solid #cbcbcb;
+  width: 100%;
+  font-size: 1.6rem;
 }
 
 .table caption {
@@ -30,39 +34,27 @@
   vertical-align: bottom;
 }
 
-/*
-striping:
-   even - #fff (white)
-   odd  - #f2f2f2 (light gray)
-*/
-.table td {
-  background-color: transparent;
-}
-.table-odd td {
-  background-color: #f2f2f2;
-}
-
 /* nth-child selector for modern browsers */
-.table-striped tr:nth-child(2n-1) td {
+.table tr:nth-child(2n) td {
   background-color: #f2f2f2;
 }
 
 /* BORDERED TABLES */
-.table-bordered td {
+.table td {
   border-bottom: 1px solid #cbcbcb;
 }
-.table-bordered tbody > tr:last-child > td {
+.table tbody > tr:last-child > td {
   border-bottom-width: 0;
 }
 
 
 /* HORIZONTAL BORDERED TABLES */
 
-.table-horizontal td,
-.table-horizontal th {
+.table td,
+.table th {
   border-width: 0 0 1px 0;
   border-bottom: 1px solid #cbcbcb;
 }
-.table-horizontal tbody > tr:last-child > td {
+.table tbody > tr:last-child > td {
   border-bottom-width: 0;
 }
