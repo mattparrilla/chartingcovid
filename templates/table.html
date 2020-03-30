@@ -1,15 +1,14 @@
-{#
-<table class="table table-horizontal">
-  <thead>
+<table class="table">
+  <thead id="js_thead">
     <tr>
-      <th>#</th>
-      <th>Make</th>
-      <th>Model</th>
-      <th>Year</th>
+      <th data-column="state">State</th>
+      <th data-column="cases">Confirmed Cases</th>
+      <th data-column="cases_per_capita">Cases Per Capita</th>
+      <th data-column="moving_avg">Growth Rate (3-Day Avg)</th>
     </tr>
   </thead>
 
-  <tbody>
+  <tbody id="js_tbody">
     <tr>
       <td>1</td>
       <td>Honda</td>
@@ -32,4 +31,3 @@
     </tr>
   </tbody>
 </table>
-#}
