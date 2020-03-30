@@ -1,6 +1,3 @@
-import trendChart from "./trendChart";
-import initTrendChart from "./trendChart";
-import initDataTable from './dataTable';
 import initCaseCountMap from "./caseCountMap";
 
 import Router from 'vanilla-router';
