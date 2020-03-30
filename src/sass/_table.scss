@@ -17,6 +17,35 @@
   text-align: center;
 }
 
+th:before,
+th:before {
+  content: "";
+  float: right;
+  height: 2rem;
+  width: 2rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url("/static/icons/descending.svg");
+  opacity: 0.3;
+}
+
+th.ascending:before {
+  background-image: url("/static/icons/ascending.svg");
+}
+
+th.descending:before,
+th.ascending:before {
+  opacity: 1;
+}
+
+th {
+  cursor: pointer;
+}
+
+td.number {
+  text-align: right;
+}
+
 .table td,
 .table th {
   border-left: 1px solid #cbcbcb;/*  inner column border */
@@ -28,9 +57,9 @@
 }
 
 .table thead {
-  background-color: #e0e0e0;
-  color: #000;
-  text-align: left;
+  background-color: palette.$neutral_8;
+  color: palette.$neutral_1;
+  text-align: center;
   vertical-align: bottom;
 }
 
@@ -52,9 +81,14 @@
 
 .table td,
 .table th {
-  border-width: 0 0 1px 0;
+  border-width: 0 0 1px 1px;
   border-bottom: 1px solid #cbcbcb;
 }
 .table tbody > tr:last-child > td {
   border-bottom-width: 0;
+}
+
+tr.highlight {
+  font-weight: bold;
+  background-color: palette.$blue_8;
 }
