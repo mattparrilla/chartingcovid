@@ -45,7 +45,7 @@ function updateTable(rows, sortColumn = "state", descendingSort = true) {
 export default async function initDataTable() {
   const [fipsData, casesByDate] = await fetchData();
   const dates = sortDateString(casesByDate);
-  const today = casesByDate[dates[0]];
+  const today = casesByDate[dates[dates.length - 1]];
   const stateData = filterOutCounties(fipsData);
 
   // Merge FIPS data with case data and calculate
