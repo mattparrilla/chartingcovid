@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import topojson from 'topojson';
 
-export default function caseCountMap() {
+export default async function initCaseCountMap() {
   map = {
     const viewportWidth = Math.max(
       document.documentElement.clientWidth, window.innerWidth || 0);
@@ -36,4 +36,14 @@ export default function caseCountMap() {
 
     return svg.node();
   }
+
+  const [fipsData, casesByDate, countyData] = await fetchData(
+    "/data/fips_data.json",
+    "/data/covid_cases_by_date.json",
+    "/data/counties-albers-10m.json",
+  );
+  states = new Map(countyData.objects.states.geometries.map(
+    d => [d.id, d.properties]))
+  path = d3.geoPath();
+  color = d3.scaleQuantize([1, 10], d3.schemeOranges[9])
 }
