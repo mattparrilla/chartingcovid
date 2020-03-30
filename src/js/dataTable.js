@@ -23,14 +23,17 @@ function sortDateString(dates) {
 function sortRowsByColumn(sortColumn) {
   const intColumns = ["cases"];
   const floatColumns = ["cases_per_capita", "moving_avg"];
+
   return function sortRows(a, b) {
     if (intColumns.includes(sortColumn)) {
       return parseInt(b[sortColumn], 10) - parseInt(a[sortColumn], 10);
-    } else if (floatColumns.includes(sortColumn)) {
-      return parseFloat(b[sortColumn]) - parseFloat(a[sortColumn]);
-    } else {
-      return a[sortColumn] > b[sortColumn] ? 1 : -1;
     }
+
+    if (floatColumns.includes(sortColumn)) {
+      return parseFloat(b[sortColumn]) - parseFloat(a[sortColumn]);
+    }
+
+    return a[sortColumn] > b[sortColumn] ? 1 : -1;
   };
 }
 
@@ -83,7 +86,7 @@ export default async function initDataTable() {
     let descendingSort = false;
     th.addEventListener("click", () => {
       descendingSort = !descendingSort;
-      updateTable(mergedStateData, th.id, descendingSort);
+      updateTable(mergedStateData, th.dataset.column, descendingSort);
     });
   });
 
