@@ -1,7 +1,6 @@
-import initTrendChart from "./trendChart";
-import initDataTable from './dataTable';
+import router, { initRouter } from './routes';
 
 window.addEventListener("DOMContentLoaded", () => {
-  initTrendChart();
-  initDataTable();
+  initRouter();
+  router.navigateTo(window.location.pathname);
 });
