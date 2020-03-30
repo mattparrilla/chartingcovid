@@ -17,6 +17,10 @@
   text-align: center;
 }
 
+td.number {
+  text-align: right;
+}
+
 .table td,
 .table th {
   border-left: 1px solid #cbcbcb;/*  inner column border */
@@ -30,7 +34,7 @@
 .table thead {
   background-color: #e0e0e0;
   color: #000;
-  text-align: left;
+  text-align: center;
   vertical-align: bottom;
 }
 
@@ -52,7 +56,7 @@
 
 .table td,
 .table th {
-  border-width: 0 0 1px 0;
+  border-width: 0 0 1px 1px;
   border-bottom: 1px solid #cbcbcb;
 }
 .table tbody > tr:last-child > td {

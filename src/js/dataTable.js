@@ -27,15 +27,19 @@ function updateTable(rows, sortColumn = "state", descendingSort = true) {
     rows.reverse();
   }
 
+  // Only show county column header if we are looking at county level data
+  document.getElementById("county_header").style.display = rows[0].county ? "table-cell" : "none";
+
   const tbody = document.getElementById("js_tbody");
   tbody.innerHTML = rows.map(row => `
     <tr>
+      ${row.county ? `<td>${row.county}</td>` : ""}
       <td>${row.state}</td>
-      <td>${row.cases.toLocaleString()}</td>
-      <td>${(row.cases / row.population).toLocaleString(undefined, {
+      <td class="number">${row.cases.toLocaleString()}</td>
+      <td class="number">${(row.cases / row.population).toLocaleString(undefined, {
         minimumFractionDigits: 5
       })}</td>
-      <td>${(row.moving_avg).toLocaleString(undefined, {
+      <td class="number">${(row.moving_avg).toLocaleString(undefined, {
         style: "percent",
         minimumFractionDigits: 2,
       })}</td>
