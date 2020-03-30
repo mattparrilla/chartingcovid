@@ -20,14 +20,37 @@ function sortRowsByColumn(sortColumn) {
   };
 }
 
+function sortTable(sortColumn, descendingSort) {
+  // sort rows in place
+  tableData.sort(sortRowsByColumn(sortColumn));
+
+  // TODO: to improve performance, could do this in sortRowsByColumn
+  if (!descendingSort) {
+    tableData.reverse();
+  }
+
+  const tbody = document.getElementById("js_tbody");
+  tbody.innerHTML = tableData.map(row => `
+    <tr ${row.highlight ? 'class="highlight"' : ''}>
+      ${row.county ? `<td>${row.county}</td>` : ""}
+      ${row.state ? `<td>${row.state}</td>` : ""}
+      <td class="number">${row.cases.toLocaleString()}</td>
+      <td class="number">${row.cases_per_capita.toLocaleString(undefined, {
+        minimumFractionDigits: 5
+      })}</td>
+      <td class="number">${(row.moving_avg).toLocaleString(undefined, {
+        style: "percent",
+        minimumFractionDigits: 2,
+      })}</td>
+    </tr>`).join('');
+}
+
 // Put data in table and sort. Order: State, Cases, Cases Per Capita, Growth Rate
 async function updateTable(data, state, countyFips, sortColumn = "state", descendingSort = true) {
   const casesByDate = await data.cases;
   const fipsData = await data.fips;
   const dates = sortDateString(casesByDate);
   const today = casesByDate[dates[dates.length - 1]];
-
-  // TODO: don't need to munge every time we sort, pull this out
 
   // Munge data for country level
   if (state == null) {
@@ -57,13 +80,6 @@ async function updateTable(data, state, countyFips, sortColumn = "state", descen
       cases_per_capita: today[county].cases / fipsData[county].population
     }));
   }
-  // sort rows in place
-  tableData.sort(sortRowsByColumn(sortColumn));
-
-  // TODO: to improve performance, could do this in sortRowsByColumn
-  if (!descendingSort) {
-    tableData.reverse();
-  }
 
   // Only show county column header if we are looking at county level data
   document.getElementById("county_header").style.display = tableData[0].county ? "table-cell" : "none";
@@ -71,21 +87,9 @@ async function updateTable(data, state, countyFips, sortColumn = "state", descen
   // Only show state if we are looking at whole country
   document.getElementById("state_header").style.display = state ? "none" : "table-cell";
 
-  const tbody = document.getElementById("js_tbody");
-  tbody.innerHTML = tableData.map(row => `
-    <tr ${row.highlight ? 'class="highlight"' : ''}>
-      ${row.county ? `<td>${row.county}</td>` : ""}
-      ${row.state ? `<td>${row.state}</td>` : ""}
-      <td class="number">${row.cases.toLocaleString()}</td>
-      <td class="number">${row.cases_per_capita.toLocaleString(undefined, {
-        minimumFractionDigits: 5
-      })}</td>
-      <td class="number">${(row.moving_avg).toLocaleString(undefined, {
-        style: "percent",
-        minimumFractionDigits: 2,
-      })}</td>
-    </tr>`).join('');
+  sortTable(sortColumn, descendingSort);
 }
+
 
 export default function initDataTable(data, state, countyFips) {
   // Add handlers to sort on column header click
@@ -101,7 +105,7 @@ export default function initDataTable(data, state, countyFips) {
 
       descendingSort = !descendingSort;
       th.classList.add(descendingSort ? "descending" : "ascending");
-      updateTable(data, state, countyFips, th.dataset.column, descendingSort);
+      sortTable(th.dataset.column, descendingSort);
     });
   });
 
