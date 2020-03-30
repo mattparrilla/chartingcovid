@@ -5,11 +5,10 @@ export async function getTrendChartData(fips) {
   const [fipsData, casesByDate] = await fetchData();
   const dates = sortDateString(casesByDate);
 
-  let data;
   // if no fips, we want whole country
   if (fips == null) {
     const stateData = filterOutCounties(fipsData);
-    data = dates.map(date => ({
+    return dates.map(date => ({
       date,
       cases: stateData.reduce((countryCases, state) => {
         const stateCases = casesByDate
@@ -19,14 +18,14 @@ export async function getTrendChartData(fips) {
       }, 0)
     }));
   }
-  return [data, dates];
+  return [];
 }
 export default async function initTrendChart() {
   const margin = { top: 30, right: 40, bottom: 30, left: 70 };
   const height = 500;
   const width = 1000;
 
-  const [data, dates] = await getTrendChartData();
+  const data = await getTrendChartData();
 
   const x = d3.scaleBand()
     .domain(d3.range(data.length))
@@ -50,15 +49,10 @@ export default async function initTrendChart() {
 
   const xAxis = g => g
     .attr("transform", `translate(0,${height - margin.bottom})`)
-    // TODO: format date
+    .attr("class", "x_axis")
     .call(d3.axisBottom(x)
-      .ticks(5)
-      // .tickValues(data.filter((d, i) => {
-      //   // only show ticks for every 5 dates, being sure to include most recent
-      //   const reverseIdx = data.length - 1 - i;
-      //   return !(reverseIdx % 5);
-      // }))
-      .tickFormat(i => data[i].date));
+      .tickSizeOuter(0)
+      .tickFormat(i => d3.timeFormat("%b %d")(d3.timeParse("%Y-%m-%d")(data[i].date))));
 
   const svg = d3.select("#js_trend_chart")
     .append("svg")
@@ -79,4 +73,10 @@ export default async function initTrendChart() {
 
   svg.append("g")
       .call(yAxis);
+
+  // only show every 5 ticks, including the latest
+  d3.selectAll(".x_axis .tick").style("display", (d, i) => {
+    const reverseIdx = data.length - 1 - i;
+    return reverseIdx % 5 ? "none" : "initial";
+  });
 }
