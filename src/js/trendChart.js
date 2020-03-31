@@ -152,12 +152,20 @@ export default async function initTrendChart(dataPromise, fips) {
     });
   });
 
+  const chartTitleMap = {
+    cases: "Confirmed Cases",
+    cases_per_capita: "Confirmed Cases Per Capita",
+    growth_factor: "Growth Factor",
+  };
+
   // Update chart scale on selection
   const metrics = document.querySelectorAll("#js_chart_metric_selector span");
   metrics.forEach(metric => {
     metric.addEventListener("click", () => {
       metrics.forEach(el => el.classList.remove("active"));
       metric.classList.add("active");
+
+      document.getElementById("js_chart_metric").innerHTML = chartTitleMap[metric.dataset.metric];
       updateChart(chart);
     });
   });
