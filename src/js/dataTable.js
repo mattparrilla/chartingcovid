@@ -1,4 +1,4 @@
-import { filterOutCounties, sortDateString } from './utilities';
+import { filterOutCounties, sortDateString, urlifyName } from './utilities';
 
 // Used to store our table data for sorting, etc
 let tableData;
@@ -8,6 +8,12 @@ function sortRowsByColumn(sortColumn) {
   const floatColumns = ["cases_per_capita", "moving_avg"];
 
   return function sortRows(a, b) {
+    if (a[sortColumn] == null) {
+      return 1;
+    }
+    if (b[sortColumn] == null) {
+      return -1;
+    }
     if (intColumns.includes(sortColumn)) {
       return parseInt(b[sortColumn], 10) - parseInt(a[sortColumn], 10);
     }
@@ -15,9 +21,40 @@ function sortRowsByColumn(sortColumn) {
     if (floatColumns.includes(sortColumn)) {
       return parseFloat(b[sortColumn]) - parseFloat(a[sortColumn]);
     }
-
     return a[sortColumn] < b[sortColumn] ? 1 : -1;
   };
+}
+
+// Create county or state table cell
+function placeCell(state, county) {
+  const stateUrl = urlifyName(state);
+  if (county) {
+    const countyUrl = urlifyName(county.replace(' County', ''));
+    return `<td><a href="/state/${stateUrl}/county/${countyUrl}">${county}</td>`;
+  }
+  return `<td><a href="/state/${stateUrl}">${state}</td>`;
+}
+
+// Truncate results if over 500 and update markup on page
+function updateTableMarkup() {
+  const truncatedData = tableData.length > 500 ? tableData.slice(0, 100) : tableData;
+
+
+  const tbody = document.getElementById("js_tbody");
+  tbody.innerHTML = truncatedData.map((row, i) => `
+    <tr ${row.highlight ? 'class="highlight"' : ''}>
+      <td class="number">${i + 1}</td>
+      ${row.county ? placeCell(row.state, row.county) : ""}
+      ${!window.chartingCovid.fips && row.state ? placeCell(row.state) : ""}
+      <td class="number">${(row.cases || "").toLocaleString()}</td>
+      <td class="number">${(row.cases_per_capita || "").toLocaleString(undefined, {
+        minimumFractionDigits: 5
+      })}</td>
+      <td class="number">${(row.moving_avg || "").toLocaleString(undefined, {
+        style: "percent",
+        minimumFractionDigits: 2,
+      })}</td>
+    </tr>`).join('');
 }
 
 function sortTable(sortColumn, descendingSort) {
@@ -29,41 +66,62 @@ function sortTable(sortColumn, descendingSort) {
     tableData.reverse();
   }
 
-  const tbody = document.getElementById("js_tbody");
-  tbody.innerHTML = tableData.map(row => `
-    <tr ${row.highlight ? 'class="highlight"' : ''}>
-      ${row.county ? `<td>${row.county}</td>` : ""}
-      ${row.state ? `<td>${row.state}</td>` : ""}
-      <td class="number">${row.cases.toLocaleString()}</td>
-      <td class="number">${row.cases_per_capita.toLocaleString(undefined, {
-        minimumFractionDigits: 5
-      })}</td>
-      <td class="number">${(row.moving_avg).toLocaleString(undefined, {
-        style: "percent",
-        minimumFractionDigits: 2,
-      })}</td>
-    </tr>`).join('');
+  updateTableMarkup();
 }
 
 // Put data in table and sort. Order: State, Cases, Cases Per Capita, Growth Rate
-async function updateTable(data, state, countyFips, sortColumn = "state", descendingSort = true) {
+async function updateTable({
+  data,
+  state,
+  countyFips,
+  sortColumn = "cases",
+  descendingSort = true,
+  showAllCounties = false
+}) {
   const casesByDate = await data.cases;
   const fipsData = await data.fips;
   const dates = sortDateString(casesByDate);
   const today = casesByDate[dates[dates.length - 1]];
 
-  // Munge data for country level
+
+  function fipsToTableRows(fips) {
+    // if we have cases reported today
+    if (today[fips]) {
+      return {
+        highlight: countyFips === fips,
+        county: fipsData[fips].county,
+        state: fipsData[fips].state,
+        ...today[fips],
+        cases_per_capita: today[fips].cases / fipsData[fips].population
+      };
+    }
+    // no cases reported for given gips
+    return {
+      highlight: countyFips === fips,
+      county: fipsData[fips].county,
+      state: fipsData[fips].state,
+      cases: null,
+      cases_per_capita: null,
+      moving_avg: null
+    };
+  }
+
+  document.getElementById("js_county_disclaimer").style.display = showAllCounties
+    ? "block"
+    : "none";
+
+  // if state is null, we are looking at US.
   if (state == null) {
-    const stateData = filterOutCounties(fipsData);
+    if (showAllCounties) {
+      const allCountyFips = Object.keys(fipsData).filter(item => (
+        fipsData[item].county !== "" // if county string is empty then we have a state
+      ));
+      tableData = allCountyFips.map(fipsToTableRows);
+    } else { // just show state level data in table
+      const states = filterOutCounties(fipsData);
 
-    // Merge FIPS data with case data and calculate
-    tableData = stateData.map(stateFips => ({
-      ...stateFips,
-      ...today[stateFips.fips],
-      // using underscores to match style of source data
-      cases_per_capita: today[stateFips.fips].cases / stateFips.population
-    }));
-
+      tableData = states.map(fipsToTableRows);
+    }
   // Munge data for state or county
   } else {
     const dataByState = Object.keys(fipsData).filter(item => (
@@ -73,25 +131,19 @@ async function updateTable(data, state, countyFips, sortColumn = "state", descen
       // filter out the top level state data (county is empty string)
       && fipsData[item].county));
 
-    tableData = dataByState.map(county => ({
-      highlight: countyFips === county,
-      county: fipsData[county].county,
-      ...today[county],
-      cases_per_capita: today[county].cases / fipsData[county].population
-    }));
+    tableData = dataByState.map(fipsToTableRows);
   }
-
   // Only show county column header if we are looking at county level data
   document.getElementById("county_header").style.display = tableData[0].county ? "table-cell" : "none";
 
   // Only show state if we are looking at whole country
   document.getElementById("state_header").style.display = state ? "none" : "table-cell";
 
-  sortTable(sortColumn, descendingSort);
+  sortTable(sortColumn, descendingSort, showAllCounties);
 }
 
 
-export default function initDataTable(data, state, countyFips) {
+export default function initDataTable({ data, state, countyFips }) {
   // Add handlers to sort on column header click
   const tableHeaders = document.querySelectorAll("#js_thead th");
   tableHeaders.forEach(th => {
@@ -109,6 +161,16 @@ export default function initDataTable(data, state, countyFips) {
     });
   });
 
+  // Handle toggle between showing state and counties in table at US level
+  const tableRowOptions = document.querySelectorAll("#js_table_county_vs_state span");
+  tableRowOptions.forEach(option => {
+    option.addEventListener("click", () => {
+      tableRowOptions.forEach(item => item.classList.remove("active"));
+      option.classList.add("active");
+      updateTable({ data, state, countyFips, showAllCounties: option.dataset.type === "county" });
+    });
+  });
+
   // init our table
-  updateTable(data, state, countyFips, "cases");
+  updateTable({ data, state, countyFips });
 }
