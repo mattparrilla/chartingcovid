@@ -163,5 +163,6 @@ parser.add_argument("--output_fips_first",
     action="store_true")
 args = parser.parse_args()
 
-generate_json(args.county_input, args.state_input, args.output_file,
-    args.moving_average_days, args.output_fips_first)
+if __name__ == "__main__":
+    generate_json(args.county_input, args.state_input, args.output_file,
+        args.moving_average_days, args.output_fips_first)
