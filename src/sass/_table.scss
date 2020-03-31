@@ -1,5 +1,23 @@
 @use "palette";
 
+#js_table_county_vs_state {
+  font-size: 1.6rem;
+  color: palette.$neutral_3;
+  margin-bottom: 2rem;
+
+  span {
+    margin-left: 1rem;
+    cursor: pointer;
+    &.active {
+      border-bottom: 2px solid palette.$neutral_4;
+    }
+  }
+}
+
+#js_county_disclaimer {
+  text-align: center;
+}
+
 .table {
   /* Remove spacing between table cells (from Normalize.css) */
   border-collapse: collapse;
@@ -8,6 +26,7 @@
   border: 1px solid #cbcbcb;
   width: 100%;
   font-size: 1.6rem;
+  margin-bottom: 1rem;
 }
 
 .table caption {
@@ -27,6 +46,11 @@ th:before {
   background-size: contain;
   background-image: url("/static/icons/descending.svg");
   opacity: 0.3;
+}
+
+// first child is row count, do not show sort icon
+th:first-child:before {
+  content: none;
 }
 
 th.ascending:before {

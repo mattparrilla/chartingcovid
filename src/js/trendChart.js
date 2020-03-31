@@ -8,13 +8,13 @@ export async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
 
   // if no fips, we want whole country
   if (fips == null) {
-    const stateData = filterOutCounties(fipsData);
+    const states = filterOutCounties(fipsData);
     return dates.map(date => ({
       date,
-      cases: stateData.reduce((countryCases, state) => {
+      cases: states.reduce((countryCases, state) => {
         const stateCases = casesByDate
-          && casesByDate[date][state.fips]
-          && casesByDate[date][state.fips].cases;
+          && casesByDate[date][state]
+          && casesByDate[date][state].cases;
         return countryCases + (stateCases || 0);
       }, 0)
     }));
