@@ -3,6 +3,6 @@
 {% block content %}
   <h1>Charting COVID-19</h1>
   <div id="js_map"></div>
-  <div id="js_trend_chart"></div>
+  {% include "trend_chart.html" %}
   {% include "table.html" %}
 {% endblock %}
