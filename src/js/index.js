@@ -33,7 +33,7 @@ window.addEventListener("DOMContentLoaded", () => {
       window.alert(`fips for: ${state} not found`);
     }
     initTrendChart(data, fips);
-    initDataTable(data, state);
+    initDataTable({ data, state });
   });
 
   router.add('state/(:any)/county/(:any)', async (state, county) => {
@@ -44,7 +44,7 @@ window.addEventListener("DOMContentLoaded", () => {
       window.alert(`fips for: ${county}, ${state} not found`);
     }
     initTrendChart(data, fips);
-    initDataTable(data, state, fips);
+    initDataTable({ data, state, countyFips: fips });
   });
 
   router.addUriListener();

@@ -1,5 +1,19 @@
 @use "palette";
 
+#js_table_county_vs_state {
+  font-size: 1.6rem;
+  color: palette.$neutral_3;
+  margin-bottom: 2rem;
+
+  span {
+    margin-left: 1rem;
+    cursor: pointer;
+    &.active {
+      border-bottom: 2px solid palette.$neutral_4;
+    }
+  }
+}
+
 .table {
   /* Remove spacing between table cells (from Normalize.css) */
   border-collapse: collapse;

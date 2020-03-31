@@ -25,19 +25,7 @@ export function fetchData() {
 }
 
 export function filterOutCounties(data) {
-  return Object.keys(data)
-    .reduce((stateData, fips) => {
-      if (data[fips].county === "") {
-        return [
-          ...stateData,
-          {
-            fips,
-            ...data[fips]
-          }
-        ];
-      }
-      return stateData;
-    }, []);
+  return Object.keys(data).filter(fips => data[fips].county === "");
 }
 
 // Sort dates in ascending order
