@@ -3,6 +3,7 @@ import initTrendChart from './trendChart';
 import initDataTable from './dataTable';
 import { stateToFips, countyToFips } from './utilities';
 import initLocationSelector from './location';
+import initCaseCountMap from "./caseCountMap";
 import router from './router';
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -18,6 +19,7 @@ window.addEventListener("DOMContentLoaded", () => {
   router.add('', () => {
     window.chartingCovid.fips = null;
     tableDisplayToggle.style.display = "block";
+    initCaseCountMap();
     initTrendChart(data);
     initDataTable({ data });
     initLocationSelector(data);

@@ -3,6 +3,8 @@ import router from './router';
 
 export default async function initLocationSelector(data, stateFips, countyFips) {
   const fipsData = await data.fips;
+  const stateSelector = document.getElementById("js_select_state");
+  const countySelector = document.getElementById("js_select_county");
 
   function populateSelector(selector, key, selectedFips) {
     return fips => {
@@ -15,15 +17,15 @@ export default async function initLocationSelector(data, stateFips, countyFips) 
   }
 
   const states = filterOutCounties(fipsData);
-  const stateSelector = document.getElementById("js_select_state");
   states.forEach(populateSelector(stateSelector, "state", stateFips));
   stateSelector.addEventListener("change", (e) => {
     const state = urlifyName(fipsData[e.target.value].state);
     router.navigateTo(`/state/${state}`);
+    countySelector.value = null
+
   });
 
   const counties = Object.keys(fipsData).filter(fips => fipsData[fips].county);
-  const countySelector = document.getElementById("js_select_county");
   counties.forEach(populateSelector(countySelector, "county", countyFips));
   countySelector.addEventListener("change", (e) => {
     console.log(e.target.value);

@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { sortDateString, filterOutCounties } from './utilities';
 
+
 export async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
   const fipsData = await dataPromise.fips;
   const casesByDate = await dataPromise.cases;
