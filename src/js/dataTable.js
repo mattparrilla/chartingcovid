@@ -25,19 +25,12 @@ function sortRowsByColumn(sortColumn) {
   };
 }
 
-function sortTable(sortColumn, descendingSort) {
-  // sort rows in place
-  tableData.sort(sortRowsByColumn(sortColumn));
-
-  // TODO: to improve performance, could do this in sortRowsByColumn
-  if (!descendingSort) {
-    tableData.reverse();
-  }
-
-  const sortedData = tableData.length > 500 ? tableData.slice(0, 100) : tableData;
+// Truncate results if over 500 and update markup on page
+function updateTableMarkup() {
+  const truncatedData = tableData.length > 500 ? tableData.slice(0, 100) : tableData;
 
   const tbody = document.getElementById("js_tbody");
-  tbody.innerHTML = sortedData.map((row, i) => `
+  tbody.innerHTML = truncatedData.map((row, i) => `
     <tr ${row.highlight ? 'class="highlight"' : ''}>
       <td class="number">${i + 1}</td>
       ${row.county ? `<td>${row.county}</td>` : ""}
@@ -51,6 +44,18 @@ function sortTable(sortColumn, descendingSort) {
         minimumFractionDigits: 2,
       })}</td>
     </tr>`).join('');
+}
+
+function sortTable(sortColumn, descendingSort) {
+  // sort rows in place
+  tableData.sort(sortRowsByColumn(sortColumn));
+
+  // TODO: to improve performance, could do this in sortRowsByColumn
+  if (!descendingSort) {
+    tableData.reverse();
+  }
+
+  updateTableMarkup();
 }
 
 // Put data in table and sort. Order: State, Cases, Cases Per Capita, Growth Rate
@@ -144,12 +149,12 @@ export default function initDataTable(data, state, countyFips) {
     });
   });
 
+  // Handle toggle between showing state and counties in table at US level
   const tableRowOptions = document.querySelectorAll("#js_table_county_vs_state span");
   tableRowOptions.forEach(option => {
     option.addEventListener("click", () => {
       tableRowOptions.forEach(item => item.classList.remove("active"));
       option.classList.add("active");
-      console.log(option.dataset.type);
       updateTable({ data, state, countyFips, showAllCounties: option.dataset.type === "county" });
     });
   });
