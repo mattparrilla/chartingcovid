@@ -34,37 +34,40 @@ export async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
   return trendData.slice(Math.max(trendData.length - numDays, 1));
 }
 
-function updateChart({ data, svg, x, y, metric }) {
+function updateChart({ data, svg, x, y }, updatedMetric) {
+  // if we have an update metric, use it, else use the selected metric from the DOM
+  const metric = updatedMetric
+    || document.querySelectorAll("#js_chart_metric_selector .active")[0].dataset.metric;
+
   x.domain(d3.range(data.length));
   y.domain([d3.min(data, d => d[metric]), d3.max(data, d => d[metric])]).nice();
 
+
+  // TODO: axis doesn't update properly
+  // update y-axis
   svg.select(".y.axis")
     .transition()
     .duration(1000)
     .call(d3.axisRight(y));
 
-  const bars = svg.selectAll("rect")
-    .data(data);
-
-  bars
+  // update bars
+  svg.selectAll("rect")
+    .data(data)
     .transition()
     .duration(1000)
     .attr("x", (d, i) => x(i))
     .attr("y", d => y(d[metric]))
     .attr("height", d => y(0) - y(d[metric]))
     .attr("width", x.bandwidth());
+}
 
-  // bars.enter().append("rect")
-  //   .attr("x", (d, i) => x(i))
-  //   .attr("y", d => y(d[metric]))
-  //   .attr("height", d => y(0) - y(d[metric]))
-  //   .attr("width", x.bandwidth());
+function updateScale(newScale, chart) {
+  const newY = (newScale === "linear" ? d3.scaleLinear() : d3.scaleSymlog())
+    .domain(chart.y.domain())
+    .range(chart.y.range());
 
-  // bars.exit()
-  //   .transition()
-  //     .duration(500)
-  //     .attr("height", 0)
-  //     .remove();
+  // update chart object with new Y scale
+  updateChart({ ...chart, y: newY });
 }
 
 export default async function initTrendChart(dataPromise, fips) {
@@ -144,13 +147,20 @@ export default async function initTrendChart(dataPromise, fips) {
     return reverseIdx % 5 ? "none" : "initial";
   });
 
+  const chart = {
+    data: chartData,
+    svg,
+    x,
+    y,
+  };
+
   // Update chart scale on selection
   const scales = document.querySelectorAll("#js_chart_scale_selector span");
   scales.forEach(scale => {
     scale.addEventListener("click", () => {
       scales.forEach(el => el.classList.remove("active"));
       scale.classList.add("active");
-      // TODO: update scale
+      updateScale(scale.dataset.scale, chart);
     });
   });
 
