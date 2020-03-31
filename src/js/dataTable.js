@@ -8,6 +8,12 @@ function sortRowsByColumn(sortColumn) {
   const floatColumns = ["cases_per_capita", "moving_avg"];
 
   return function sortRows(a, b) {
+    if (a[sortColumn] == null) {
+      return 1;
+    }
+    if (b[sortColumn] == null) {
+      return -1;
+    }
     if (intColumns.includes(sortColumn)) {
       return parseInt(b[sortColumn], 10) - parseInt(a[sortColumn], 10);
     }
@@ -15,7 +21,6 @@ function sortRowsByColumn(sortColumn) {
     if (floatColumns.includes(sortColumn)) {
       return parseFloat(b[sortColumn]) - parseFloat(a[sortColumn]);
     }
-
     return a[sortColumn] < b[sortColumn] ? 1 : -1;
   };
 }
@@ -34,11 +39,11 @@ function sortTable(sortColumn, descendingSort) {
     <tr ${row.highlight ? 'class="highlight"' : ''}>
       ${row.county ? `<td>${row.county}</td>` : ""}
       ${row.state ? `<td>${row.state}</td>` : ""}
-      <td class="number">${row.cases.toLocaleString()}</td>
-      <td class="number">${row.cases_per_capita.toLocaleString(undefined, {
+      <td class="number">${(row.cases || "").toLocaleString()}</td>
+      <td class="number">${(row.cases_per_capita || "").toLocaleString(undefined, {
         minimumFractionDigits: 5
       })}</td>
-      <td class="number">${(row.moving_avg).toLocaleString(undefined, {
+      <td class="number">${(row.moving_avg || "").toLocaleString(undefined, {
         style: "percent",
         minimumFractionDigits: 2,
       })}</td>
@@ -83,13 +88,12 @@ async function updateTable(data, state, countyFips, sortColumn = "state", descen
       : {
         highlight: countyFips === fips,
         county: fipsData[fips].county,
-        cases: '',
-        cases_per_capita: '',
-        moving_avg: ''
+        cases: null,
+        cases_per_capita: null,
+        moving_avg: null
       }
     ));
   }
-
   // Only show county column header if we are looking at county level data
   document.getElementById("county_header").style.display = tableData[0].county ? "table-cell" : "none";
 
