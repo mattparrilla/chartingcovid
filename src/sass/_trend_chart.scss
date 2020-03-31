@@ -1,3 +1,35 @@
+@use "variables";
+@use "palette";
+
 #js_trend_chart {
   margin-bottom: 5rem;
+  position: relative;
+  min-height: 5rem;
+
+  svg text {
+    font-size: 1.8rem;
+  }
+}
+
+.chart_info {
+  position: absolute;
+  top: 0;
+}
+
+#js_chart_metric {
+  font-size: 3.2rem;
+  font-weight: 600;
+}
+
+#js_chart_scale_selector {
+  font-size: 1.6rem;
+  color: palette.$neutral_3;
+
+  span {
+    margin-left: 1rem;
+    cursor: pointer;
+    &.active {
+      border-bottom: 2px solid palette.$neutral_4;
+    }
+  }
 }
