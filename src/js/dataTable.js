@@ -73,12 +73,21 @@ async function updateTable(data, state, countyFips, sortColumn = "state", descen
       // filter out the top level state data (county is empty string)
       && fipsData[item].county));
 
-    tableData = dataByState.map(county => ({
-      highlight: countyFips === county,
-      county: fipsData[county].county,
-      ...today[county],
-      cases_per_capita: today[county].cases / fipsData[county].population
-    }));
+    tableData = dataByState.map(fips => (today[fips]
+      ? {
+        highlight: countyFips === fips,
+        county: fipsData[fips].county,
+        ...today[fips],
+        cases_per_capita: today[fips].cases / fipsData[fips].population
+      }
+      : {
+        highlight: countyFips === fips,
+        county: fipsData[fips].county,
+        cases: '',
+        cases_per_capita: '',
+        moving_avg: ''
+      }
+    ));
   }
 
   // Only show county column header if we are looking at county level data
