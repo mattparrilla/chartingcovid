@@ -1,5 +1,3 @@
-import { json } from 'd3';
-
 // Replace spaces with '-' and convert to lowercase
 export function urlifyName(name) {
   return name.replace(/\s/g, '-').toLowerCase();
@@ -20,14 +18,6 @@ export async function stateToFips(fipsData, state) {
   return Object.keys(fips).find(item => (
     urlifyName(fips[item].state) === state
   ));
-}
-
-export function fetchData() {
-  return Promise.all([
-    json("/data/fips_data.json"),
-    json("/data/covid_cases_by_date.json"),
-    json("/data/counties-albers-10m2.json")
-  ]);
 }
 
 export function filterOutCounties(data) {

@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import * as topojson from 'topojson-client'
+import * as topojson from 'topojson-client';
 import { fetchData, filterOutStates } from './utilities';
 
 var svg;
@@ -33,7 +33,7 @@ function removeStates(caseData, fipsData) {
   const keys = Object.keys(caseData);
   keys.forEach(function(key) {
     if (fipsData[key] == null || fipsData[key].county.length == 0) {
-      delete caseData[key]
+      delete caseData[key];
     }
   });
 }
@@ -47,12 +47,14 @@ function perCapita(caseData, fipsData) {
   return caseData;
 }
 
-export default async function initCaseCountMap() {
+export default async function initCaseCountMap(data) {
   drawMap();
 
-  const [fipsData, casesByDate, countyData] = await fetchData();
-  const states = new Map(countyData.objects.states.geometries.map(
-    d => [d.id, d.properties]))
+  const fipsData = await data.fips;
+  const casesByDate = await data.cases;
+  const countyOutline = await data.countyOutline;
+  const states = new Map(countyOutline.objects.states.geometries.map(
+    d => [d.id, d.properties]));
   const mostRecentData = casesByDate["2020-03-27"];
   removeStates(mostRecentData, fipsData);
   const perCapitaCountyData = perCapita(mostRecentData, fipsData);
@@ -60,5 +62,5 @@ export default async function initCaseCountMap() {
     d3.extent((Object.values(mostRecentData)).map(c => Math.log(c.cases)));
   const color = d3.scaleQuantize(extent, d3.schemeOranges[9]);
 
-  updateMap(countyData, states, mostRecentData, color);
+  updateMap(countyOutline, states, mostRecentData, color);
 }

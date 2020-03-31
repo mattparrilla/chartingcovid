@@ -10,7 +10,8 @@ window.addEventListener("DOMContentLoaded", () => {
   // kick off data calls
   const data = {
     fips: json("/data/fips_data.json"),
-    cases: json("/data/covid_cases_by_date.json")
+    cases: json("/data/covid_cases_by_date.json"),
+    countyOutline: json("/data/counties-albers-10m2.json")
   };
 
   const tableDisplayToggle = document.getElementById("js_table_county_vs_state");
@@ -19,7 +20,7 @@ window.addEventListener("DOMContentLoaded", () => {
   router.add('', () => {
     window.chartingCovid.fips = null;
     tableDisplayToggle.style.display = "block";
-    initCaseCountMap();
+    initCaseCountMap(data);
     initTrendChart(data);
     initDataTable({ data });
     initLocationSelector(data);
