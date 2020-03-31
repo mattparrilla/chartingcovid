@@ -1,3 +1,5 @@
+import initCaseCountMap from "./caseCountMap";
+
 import Router from 'vanilla-router';
 import { json } from 'd3';
 import initTrendChart from './trendChart';
@@ -26,6 +28,7 @@ window.addEventListener("DOMContentLoaded", () => {
   router.add('', () => {
     window.chartingCovid.fips = null;
     tableDisplayToggle.style.display = "block";
+    initCaseCountMap();
     initTrendChart(data);
     initDataTable({ data });
   });

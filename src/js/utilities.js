@@ -25,7 +25,8 @@ export async function stateToFips(fipsData, state) {
 export function fetchData() {
   return Promise.all([
     json("/data/fips_data.json"),
-    json("/data/covid_cases_by_date.json")
+    json("/data/covid_cases_by_date.json"),
+    json("/data/counties-albers-10m2.json")
   ]);
 }
 
