@@ -34,21 +34,36 @@ export async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
   return trendData.slice(Math.max(trendData.length - numDays, 1));
 }
 
-function updateChart({ data, svg, x, y }, updatedMetric) {
-  // if we have an update metric, use it, else use the selected metric from the DOM
-  const metric = updatedMetric
-    || document.querySelectorAll("#js_chart_metric_selector .active")[0].dataset.metric;
+function updateChart({ data, svg, x, y }) {
+  const { metric, scale } = document
+    .querySelectorAll("#js_chart_metric_selector .active")[0].dataset;
 
   x.domain(d3.range(data.length));
-  y.domain([d3.min(data, d => d[metric]), d3.max(data, d => d[metric])]).nice();
+  const yMax = d3.max(data, d => d[metric]);
+  y.domain([d3.min(data, d => d[metric]), yMax]).nice();
 
+  const updatedY = (scale === "log" ? d3.scaleSymlog() : d3.scaleLinear())
+    .domain(y.domain())
+    .range(y.range());
 
-  // TODO: axis doesn't update properly
-  // update y-axis
-  svg.select(".y.axis")
-    .transition()
-    .duration(1000)
-    .call(d3.axisRight(y));
+  if (scale === "log") {
+    // build list of logarithmic ticks (1,2,3....10, 20, 30,..100, 200, 300...)
+    let ticks = [0];
+    let displayTicks = [0];
+    for (let i = 0; i <= 5; i++) {
+      displayTicks.push(10 ** i);
+      for (let j = 1; j < 10; j++) {
+        ticks.push(j * 10 ** i);
+      }
+    }
+    svg.select(".y.axis")
+      .call(d3.axisRight(updatedY)
+        .tickValues(ticks.filter(tick => tick < yMax))
+        .tickFormat(i => displayTicks.includes(i) ? i.toLocaleString() : ""));
+  } else {
+    svg.select(".y.axis")
+      .call(d3.axisRight(updatedY));
+  }
 
   // update bars
   svg.selectAll("rect")
@@ -56,18 +71,9 @@ function updateChart({ data, svg, x, y }, updatedMetric) {
     .transition()
     .duration(1000)
     .attr("x", (d, i) => x(i))
-    .attr("y", d => y(d[metric]))
-    .attr("height", d => y(0) - y(d[metric]))
+    .attr("y", d => updatedY(d[metric]))
+    .attr("height", d => updatedY(0) - updatedY(d[metric]))
     .attr("width", x.bandwidth());
-}
-
-function updateScale(newScale, chart) {
-  const newY = (newScale === "linear" ? d3.scaleLinear() : d3.scaleSymlog())
-    .domain(chart.y.domain())
-    .range(chart.y.range());
-
-  // update chart object with new Y scale
-  updateChart({ ...chart, y: newY });
 }
 
 export default async function initTrendChart(dataPromise, fips) {
@@ -83,13 +89,8 @@ export default async function initTrendChart(dataPromise, fips) {
     .padding(0.1);
 
   const y = d3.scaleLinear()
-      .domain([0, d3.max(chartData, d => d.cases)]).nice()
+      .domain([d3.min(chartData, d => d.cases), d3.max(chartData, d => d.cases)]).nice()
       .range([height - margin.bottom, margin.top]);
-
-  // TODO: implement scale
-  // const yLog = d3.scaleSymlog()
-  //     .domain([0, d3.max(chartData, d => d.cases)]).nice()
-  //     .range([height - margin.bottom, margin.top]);
 
   const svg = d3.select("#js_trend_chart")
     .append("svg")
@@ -105,13 +106,6 @@ export default async function initTrendChart(dataPromise, fips) {
       .attr("height", d => y(0) - y(d.cases))
       .attr("width", x.bandwidth());
 
-  // const yAxis = yScale => g => g
-  //   .attr("class", "y axis")
-  //   .attr("transform", `translate(${width - margin.right},0)`)
-  //   .call(d3.axisRight(y))
-  //   .call(d => d.append("text")
-  //   });
-
   svg.append("g")
     .attr("class", "y axis")
     .attr("transform", `translate(${width - margin.right},0)`)
@@ -123,18 +117,12 @@ export default async function initTrendChart(dataPromise, fips) {
       .attr("text-anchor", "start")
       .text(chartData.y);
 
-  const xAxis = g => g
+  svg.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .attr("class", "x axis")
     .call(d3.axisBottom(x)
       .tickSizeOuter(0)
       .tickFormat(i => d3.timeFormat("%b %d")(d3.timeParse("%Y-%m-%d")(chartData[i].date))));
-
-  // svg.append("g")
-  //   .call(yAxis(y, chartData));
-
-  svg.append("g")
-    .call(xAxis);
 
   // Deciding which ticks to display on the bar chart...
   // starting from the most recent date, show every 5 ticks but also show the
@@ -160,7 +148,7 @@ export default async function initTrendChart(dataPromise, fips) {
     scale.addEventListener("click", () => {
       scales.forEach(el => el.classList.remove("active"));
       scale.classList.add("active");
-      updateScale(scale.dataset.scale, chart);
+      updateChart(chart);
     });
   });
 
@@ -170,7 +158,7 @@ export default async function initTrendChart(dataPromise, fips) {
     metric.addEventListener("click", () => {
       metrics.forEach(el => el.classList.remove("active"));
       metric.classList.add("active");
-      updateChart({ data: chartData, svg, x, y, metric: metric.dataset.metric });
+      updateChart(chart);
     });
   });
 }
