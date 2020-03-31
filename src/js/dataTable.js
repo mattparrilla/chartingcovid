@@ -34,9 +34,12 @@ function sortTable(sortColumn, descendingSort) {
     tableData.reverse();
   }
 
+  const sortedData = tableData.length > 500 ? tableData.slice(0, 100) : tableData;
+
   const tbody = document.getElementById("js_tbody");
-  tbody.innerHTML = tableData.map(row => `
+  tbody.innerHTML = sortedData.map((row, i) => `
     <tr ${row.highlight ? 'class="highlight"' : ''}>
+      <td class="number">${i + 1}</td>
       ${row.county ? `<td>${row.county}</td>` : ""}
       ${row.state ? `<td>${row.state}</td>` : ""}
       <td class="number">${(row.cases || "").toLocaleString()}</td>
@@ -66,7 +69,6 @@ async function updateTable({
 
   function fipsToTableRows(fips) {
     // if we have cases reported today
-    console.log(today[fips]);
     if (today[fips]) {
       return {
         highlight: countyFips === fips,
@@ -87,7 +89,7 @@ async function updateTable({
     };
   }
 
-  document.getElementById("js_county_disclaimer").display = showAllCounties
+  document.getElementById("js_county_disclaimer").style.display = showAllCounties
     ? "block"
     : "none";
 
@@ -120,7 +122,7 @@ async function updateTable({
   // Only show state if we are looking at whole country
   document.getElementById("state_header").style.display = state ? "none" : "table-cell";
 
-  sortTable(sortColumn, descendingSort);
+  sortTable(sortColumn, descendingSort, showAllCounties);
 }
 
 
@@ -147,7 +149,8 @@ export default function initDataTable(data, state, countyFips) {
     option.addEventListener("click", () => {
       tableRowOptions.forEach(item => item.classList.remove("active"));
       option.classList.add("active");
-      // TODO: update table
+      console.log(option.dataset.type);
+      updateTable({ data, state, countyFips, showAllCounties: option.dataset.type === "county" });
     });
   });
 

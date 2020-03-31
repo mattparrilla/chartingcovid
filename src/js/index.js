@@ -15,17 +15,21 @@ window.addEventListener("DOMContentLoaded", () => {
     cases: json("/data/covid_cases_by_date.json")
   };
 
+  const tableDisplayToggle = document.getElementById("js_table_county_vs_state");
+
   // TODO: create separate init and update functions for elements, all should
   // initialize without data
 
   // TODO: get fetchData promise here, await it in the view block
 
   router.add('', () => {
+    tableDisplayToggle.style.display = "block";
     initTrendChart(data);
     initDataTable(data);
   });
 
   router.add('state/(:any)', async (state) => {
+    tableDisplayToggle.style.display = "none";
     const fips = await stateToFips(data.fips, state);
     console.log(`State: ${state}; FIPS: ${fips}`);
     // TODO: handle if FIPS not found
@@ -37,6 +41,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   router.add('state/(:any)/county/(:any)', async (state, county) => {
+    tableDisplayToggle.style.display = "none";
     const fips = await countyToFips(data.fips, state, county);
     console.log(`State: ${state}; County: ${county}; FIPS: ${fips}`);
     // TODO: handle if FIPS not found
