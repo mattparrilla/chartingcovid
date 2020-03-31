@@ -1,17 +1,12 @@
-import initCaseCountMap from "./caseCountMap";
-
-import Router from 'vanilla-router';
 import { json } from 'd3';
 import initTrendChart from './trendChart';
 import initDataTable from './dataTable';
 import { stateToFips, countyToFips } from './utilities';
-
-const router = new Router({
-  mode: 'history'
-});
+import initLocationSelector from './location';
+import initCaseCountMap from "./caseCountMap";
+import router from './router';
 
 window.addEventListener("DOMContentLoaded", () => {
-  window.chartingCovid = {};
   // kick off data calls
   const data = {
     fips: json("/data/fips_data.json"),
@@ -19,11 +14,7 @@ window.addEventListener("DOMContentLoaded", () => {
   };
 
   const tableDisplayToggle = document.getElementById("js_table_county_vs_state");
-
-  // TODO: create separate init and update functions for elements, all should
-  // initialize without data
-
-  // TODO: get fetchData promise here, await it in the view block
+  window.chartingCovid = {};
 
   router.add('', () => {
     window.chartingCovid.fips = null;
@@ -31,6 +22,7 @@ window.addEventListener("DOMContentLoaded", () => {
     initCaseCountMap();
     initTrendChart(data);
     initDataTable({ data });
+    initLocationSelector(data);
   });
 
   router.add('state/(:any)', async (state) => {
@@ -44,19 +36,24 @@ window.addEventListener("DOMContentLoaded", () => {
     window.chartingCovid.fips = fips;
     initTrendChart(data, fips);
     initDataTable({ data, state });
+    initLocationSelector(data, fips);
   });
 
   router.add('state/(:any)/county/(:any)', async (state, county) => {
     tableDisplayToggle.style.display = "none";
-    const fips = await countyToFips(data.fips, state, county);
-    console.log(`State: ${state}; County: ${county}; FIPS: ${fips}`);
+    const countyFips = await countyToFips(data.fips, state, county);
+    const stateFips = await stateToFips(data.fips, state);
+
+    console.log(`State: ${state}; County: ${county}; FIPS: ${countyFips}`);
     // TODO: handle if FIPS not found
-    if (!fips) {
+    if (!countyFips) {
       window.alert(`fips for: ${county}, ${state} not found`);
     }
-    window.chartingCovid.fips = fips;
-    initTrendChart(data, fips);
-    initDataTable({ data, state, countyFips: fips });
+
+    window.chartingCovid.fips = countyFips;
+    initTrendChart(data, countyFips);
+    initDataTable({ data, state, countyFips });
+    initLocationSelector(data, stateFips, countyFips);
   });
 
   router.addUriListener();
