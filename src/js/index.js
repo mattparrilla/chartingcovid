@@ -9,6 +9,7 @@ const router = new Router({
 });
 
 window.addEventListener("DOMContentLoaded", () => {
+  window.chartingCovid = {};
   // kick off data calls
   const data = {
     fips: json("/data/fips_data.json"),
@@ -23,9 +24,10 @@ window.addEventListener("DOMContentLoaded", () => {
   // TODO: get fetchData promise here, await it in the view block
 
   router.add('', () => {
+    window.chartingCovid.fips = null;
     tableDisplayToggle.style.display = "block";
     initTrendChart(data);
-    initDataTable(data);
+    initDataTable({ data });
   });
 
   router.add('state/(:any)', async (state) => {
@@ -36,6 +38,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!fips) {
       window.alert(`fips for: ${state} not found`);
     }
+    window.chartingCovid.fips = fips;
     initTrendChart(data, fips);
     initDataTable({ data, state });
   });
@@ -48,6 +51,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!fips) {
       window.alert(`fips for: ${county}, ${state} not found`);
     }
+    window.chartingCovid.fips = fips;
     initTrendChart(data, fips);
     initDataTable({ data, state, countyFips: fips });
   });

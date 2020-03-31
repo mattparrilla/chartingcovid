@@ -87,11 +87,6 @@ td.number {
   vertical-align: bottom;
 }
 
-/* nth-child selector for modern browsers */
-.table tr:nth-child(2n) td {
-  background-color: #f2f2f2;
-}
-
 /* BORDERED TABLES */
 .table td {
   border-bottom: 1px solid #cbcbcb;
@@ -114,5 +109,5 @@ td.number {
 
 tr.highlight {
   font-weight: bold;
-  background-color: palette.$blue_8;
+  background: palette.$blue_8;
 }

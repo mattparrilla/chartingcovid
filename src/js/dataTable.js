@@ -1,4 +1,4 @@
-import { filterOutCounties, sortDateString } from './utilities';
+import { filterOutCounties, sortDateString, urlifyName } from './utilities';
 
 // Used to store our table data for sorting, etc
 let tableData;
@@ -25,16 +25,27 @@ function sortRowsByColumn(sortColumn) {
   };
 }
 
+// Create county or state table cell
+function placeCell(state, county) {
+  const stateUrl = urlifyName(state);
+  if (county) {
+    const countyUrl = urlifyName(county.replace(' County', ''));
+    return `<td><a href="/state/${stateUrl}/county/${countyUrl}">${county}</td>`;
+  }
+  return `<td><a href="/state/${stateUrl}">${state}</td>`;
+}
+
 // Truncate results if over 500 and update markup on page
 function updateTableMarkup() {
   const truncatedData = tableData.length > 500 ? tableData.slice(0, 100) : tableData;
+
 
   const tbody = document.getElementById("js_tbody");
   tbody.innerHTML = truncatedData.map((row, i) => `
     <tr ${row.highlight ? 'class="highlight"' : ''}>
       <td class="number">${i + 1}</td>
-      ${row.county ? `<td>${row.county}</td>` : ""}
-      ${row.state ? `<td>${row.state}</td>` : ""}
+      ${row.county ? placeCell(row.state, row.county) : ""}
+      ${!window.chartingCovid.fips && row.state ? placeCell(row.state) : ""}
       <td class="number">${(row.cases || "").toLocaleString()}</td>
       <td class="number">${(row.cases_per_capita || "").toLocaleString(undefined, {
         minimumFractionDigits: 5
@@ -71,6 +82,7 @@ async function updateTable({
   const fipsData = await data.fips;
   const dates = sortDateString(casesByDate);
   const today = casesByDate[dates[dates.length - 1]];
+
 
   function fipsToTableRows(fips) {
     // if we have cases reported today
@@ -131,7 +143,7 @@ async function updateTable({
 }
 
 
-export default function initDataTable(data, state, countyFips) {
+export default function initDataTable({ data, state, countyFips }) {
   // Add handlers to sort on column header click
   const tableHeaders = document.querySelectorAll("#js_thead th");
   tableHeaders.forEach(th => {
