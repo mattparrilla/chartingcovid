@@ -1,6 +1,6 @@
 // Replace spaces with '-' and convert to lowercase
 export function urlifyName(name) {
-  return name.replace(/\s/g, '-').toLowerCase();
+  return name.replace(" County", "").replace(/\s/g, '-').toLowerCase();
 }
 
 export async function countyToFips(fipsData, state, county) {
@@ -9,7 +9,7 @@ export async function countyToFips(fipsData, state, county) {
     // State in FIPS json is ex: New Jersey
     urlifyName(fips[item].state) === state
     // County in FIPS json is ex: Bergen County
-      && urlifyName(fips[item].county.replace(" County", "")) === county
+      && urlifyName(fips[item].county) === county
   ));
 }
 

@@ -20,7 +20,8 @@
       "spaced-comment": "off",
       "indent": "off",
       "quotes": "off",
-      "object-curly-newline": "off"
+      "object-curly-newline": "off",
+      "no-confusing-arrow": "off"
     }
 }
 
