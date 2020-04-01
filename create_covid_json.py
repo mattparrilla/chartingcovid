@@ -269,7 +269,7 @@ def record_case_counts(csv_data: list, output_data: dict,
             output_fips_first)
 
         this_date = datetime.strptime(row[DATE], '%Y-%m-%d').date()
-        # Indicates that how many previous days' case counts were adjusted
+        # Indicates how many previous days' case counts were adjusted
         # down below, due to the current day's count being lower. In this
         # case older counts were in error. Either the case(s) was
         # incorrect or reassigned to another FIPS. This count indicates
