@@ -6,8 +6,8 @@ Args:
     --county_input: The file path to NYT county covid case data csv.
     --state_input: The file path to NYT state covid case data csv.
     --output_file: The path to file to output JSON to.
-    --moving_average_days: The number of preceding days of case data to average
-      when calculating the moving average of daily case growth.
+    --growth_metric_days: The number of preceding days of case data to use
+      when calculating the growth factor and doubling time.
     --output_fips_first: If true, the output JSON top level key will be a FIPS
       geographic entity code for the state/county. Otherwise, will be the date.
 """
@@ -18,12 +18,14 @@ from datetime import datetime, timedelta
 import json
 import math
 from statistics import mean
-from typing import Optional
+from typing import Optional, Union
 
 
 # The minimum number of cases needed for a given date-FIPS pair to produce a
 # growth factor and doubling time estimate.
 MIN_CASE_COUNT = 50
+
+Num = Union[int, float]
 
 
 def set_case_count(output_data: dict, date: str, fips: str, cases: int,
@@ -63,11 +65,48 @@ def get_case_count(output_data: dict, date: str, fips: str,
     return None
 
 
+def get_exp_growth_rate(final: Num, starting: Num, num_periods: Num) -> float:
+    """
+    The exp function is Final = (Starting)e**(Rate*Periods)
+    So, Rate = -ln(Starting/Final)/Periods
+    For step-by-step:
+    https://www.mathway.com/popular-problems/Algebra/201906
+    """
+    return -math.log(starting / final) / num_periods
+
+
+def get_doubling_time(preceding_case_counts: list) -> Optional[float]:
+    """
+    This is the predicted amount of time, in days, that it will take for the
+    list of case counts provided to double from the most recent entry's count.
+
+    The formula to calculate doubling time is:
+        ln(2) / ln(1 + Rate)
+    """
+    number_of_days = len(preceding_case_counts)
+    earliest_count = preceding_case_counts[-1]
+    latest_count = preceding_case_counts[0]
+    exp_growth_rate = get_exp_growth_rate(
+        latest_count, earliest_count, number_of_days)
+    return math.log(2) / math.log(1 + exp_growth_rate)
+
+
 def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
     """
+    Calculate the moving average growth factor.
+    This is the average relative daily growth in new cases over the prior
+    len(preceding_case_counts) days.
+
+    Example:
+
+    Let's say preceding_case_counts is [150, 120, 100].
+    100 -> 120 = 1.2 growth factor.
+    120 -> 150 = 1.25 growth factor.
+    We average the daily growth rates and record a 1.225 growth factor for
+    the current day.
     """
     # Find the absolute count of new daily cases for the previous
-    # len(preceding_case_counts), which is moving_average_days, days.
+    # len(preceding_case_counts), which is growth_metric_days, days.
     increases = []
     can_calculate_growth_factor = True
     for i in range(len(preceding_case_counts) - 1):
@@ -88,13 +127,8 @@ def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
                 # we decline to record a growth factor.
                 can_calculate_growth_factor = False
                 break
-            # The exp function is Final = (Starting)e**(Rate*Periods)
-            # So, Rate = -ln(Starting/Final)/Periods
-            # For step-by-step:
-            # https://www.mathway.com/popular-problems/Algebra/201906
-            num_periods = 2
-            exp_growth_rate = \
-                -math.log(previous_count / next_count) / num_periods
+            exp_growth_rate = get_exp_growth_rate(
+                next_count, previous_count, num_periods=2)
             # To get the new count, we grow the previous day's count
             # by the exp growth rate we found above.
             # New Total = e**Rate * Starting
@@ -103,8 +137,8 @@ def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
             increase = new_count - previous_count
         increases.append(increase)
 
-    # Find the growth in daily new cases for the previous
-    # moving_average_days days, if possible.
+    # Find the growth in daily new cases for the previous growth_metric_days
+    # days, if possible.
     if can_calculate_growth_factor:
         growth_in_daily_new_cases = []
         for i in range(len(increases) - 1):
@@ -114,23 +148,21 @@ def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
     return None
 
 
-def record_growth_factor(output_data: dict,
+def record_growth_metrics(output_data: dict,
         inverse_chronological_case_data: dict,
-        output_fips_first: bool, moving_average_days: int,
+        output_fips_first: bool, growth_metric_days: int,
         latest_date: datetime.date, total_days_of_data: int) -> dict:
     """
-    Add the moving average growth factor to output_data.
-    This is the average relative daily growth in new cases over the prior
-    moving_average_days days.
+    Add growth_factor and doubling_time to output_data.
 
-    Example:
+    Growth factor is the average relative daily growth in new cases over the
+    prior growth_metric_days days.
 
-    Let's the previous 3 days have had total case counts of 160, 120, 100 and
-    that moving_average_days is 3.
-    100 -> 120 = 1.2 growth factor.
-    120 -> 160 = 1.25 growth factor.
-    We average the daily growth rates and record a 1.225 growth factor for
-    the current day.
+    Doubling time is the predicted time it will take for a given FIPS location
+    and date combination to double its case count.
+
+    Both of these metrics are explained further in get_growth_factor() and
+    get_doubling_time().
     """
     for outer_key, entries in output_data.items():
         for inner_key, cases_data in entries.items():
@@ -142,13 +174,13 @@ def record_growth_factor(output_data: dict,
                 date_string = outer_key
 
             # Find the slice of inverse_chronological_case_data cooresponding
-            # to the preceding moving_average_days days for this fips location.
+            # to the preceding growth_metric_days days for this fips location.
             this_date = datetime.strptime(date_string, '%Y-%m-%d').date()
             start = (latest_date - this_date).days
-            end = min(start+moving_average_days, total_days_of_data)
+            end = min(start+growth_metric_days, total_days_of_data)
             preceding_case_counts = \
                 inverse_chronological_case_data[fips_id][start:end]
-            if len(preceding_case_counts) != moving_average_days or \
+            if len(preceding_case_counts) != growth_metric_days or \
                     None in preceding_case_counts or \
                     preceding_case_counts[0] < MIN_CASE_COUNT:
                 # We don't have enough days of data, or have faulty data, or
@@ -156,65 +188,32 @@ def record_growth_factor(output_data: dict,
                 # a growth factor.
                 continue
 
-            # Find the absolute count of new daily cases for the previous
-            # moving_average_days days.
-            increases = []
-            can_calculate_growth_factor = True
-            for i in range(len(preceding_case_counts) - 1):
-                increase = \
-                    preceding_case_counts[i] - preceding_case_counts[i + 1]
-                # Cases that have 0 increase introduce a division by 0 error
-                # when we calculate our moving average. Many of these cases
-                # will be days where there was a lack of reporting. We attempt
-                # to extrapolate a "most likely" value for these no-change
-                # days. We do this by calculating the exponential growth rate
-                # between the previous and following day case counts and using
-                # that rate to estimate a new value for the day.
-                if i != 0 and increase == 0:
-                    next_count = preceding_case_counts[i - 1]
-                    previous_count = preceding_case_counts[i + 1]
-                    if next_count - previous_count == 0:
-                        # If there are 3 case counts in a row that are equal,
-                        # we decline to record a growth factor.
-                        can_calculate_growth_factor = False
-                        break
-                    # The exp function is Final = (Starting)e**(Rate*Periods)
-                    # So, Rate = -ln(Starting/Final)/Periods
-                    # For step-by-step:
-                    # https://www.mathway.com/popular-problems/Algebra/201906
-                    num_periods = 2
-                    exp_growth_rate = \
-                        -math.log(previous_count / next_count) / num_periods
-                    # To get the new count, we grow the previous day's count
-                    # by the exp growth rate we found above.
-                    # New Total = e**Rate * Starting
-                    new_count = \
-                        math.e**exp_growth_rate * preceding_case_counts[i + 1]
-                    increase = new_count - previous_count
-                increases.append(increase)
+            growth_factor = get_growth_factor(preceding_case_counts)
+            if growth_factor:
+                if output_fips_first:
+                    output_data[fips_id][date_string]['growth_factor'] = \
+                        growth_factor
+                else:
+                    output_data[date_string][fips_id]['growth_factor'] = \
+                        growth_factor
 
-            growth_in_daily_new_cases = []
-            # Find the growth in daily new cases for the previous
-            # moving_average_days days, if possible.
-            if can_calculate_growth_factor:
-                for i in range(len(increases) - 1):
-                    growth_in_daily_new_cases.append(
-                        increases[i] / increases[i + 1])
-            else:
-                continue
-
-            if output_fips_first:
-                output_data[fips_id][date_string]['growth_factor'] = mean(
-                    growth_in_daily_new_cases)
-            else:
-                output_data[date_string][fips_id]['growth_factor'] = mean(
-                    growth_in_daily_new_cases)
+            doubling_time = get_doubling_time(preceding_case_counts)
+            if doubling_time:
+                if output_fips_first:
+                    output_data[fips_id][date_string]['doubling_time'] = \
+                        doubling_time
+                else:
+                    output_data[date_string][fips_id]['doubling_time'] = \
+                        doubling_time
+            if date_string == "2020-03-30" and preceding_case_counts[0] > 100:
+                print(output_data[date_string][fips_id])
+                print(preceding_case_counts)
     return output_data
 
 
 def record_case_counts(csv_data: list, output_data: dict,
         inverse_chronological_case_data: dict,
-        output_fips_first: bool, moving_average_days: int,
+        output_fips_first: bool, growth_metric_days: int,
         is_state_file: bool, latest_date: datetime.date,
         total_days_of_data: int) -> (dict, dict):
     """
@@ -305,7 +304,7 @@ def record_case_counts(csv_data: list, output_data: dict,
 
 
 def generate_covid_data(filename: str, output_data: dict,
-        moving_average_days: int, output_fips_first: bool,
+        growth_metric_days: int, output_fips_first: bool,
         is_state_file: bool=False) -> dict:
     """
     For a supplied csv file, containing either state or county covid data,
@@ -353,26 +352,24 @@ def generate_covid_data(filename: str, output_data: dict,
 
         output_data, inverse_chronological_case_data = record_case_counts(
                 csv_list, output_data, inverse_chronological_case_data,
-                output_fips_first, moving_average_days, is_state_file,
+                output_fips_first, growth_metric_days, is_state_file,
                 latest_date, total_days_of_data)
 
-
-
-        output_data = record_growth_factor(output_data,
+        output_data = record_growth_metrics(output_data,
                 inverse_chronological_case_data, output_fips_first,
-                moving_average_days, latest_date, total_days_of_data)
+                growth_metric_days, latest_date, total_days_of_data)
 
         return output_data
 
 
 def generate_json(counties_file: str, states_file: str, output_file: str,
-        moving_average_days: int, output_fips_first: bool) -> None:
+        growth_metric_days: int, output_fips_first: bool) -> None:
     empty_data = defaultdict(dict)
     state_data = generate_covid_data(
-        states_file, empty_data, moving_average_days, output_fips_first,
+        states_file, empty_data, growth_metric_days, output_fips_first,
         is_state_file=True)
     state_and_county_data = generate_covid_data(
-        counties_file, state_data, moving_average_days, output_fips_first)
+        counties_file, state_data, growth_metric_days, output_fips_first)
     item_count = 0
     has_growth = 0
     has_pos_growth = 0
@@ -382,19 +379,11 @@ def generate_json(counties_file: str, states_file: str, output_file: str,
             has_growth += 1
             if float(data["growth_factor"]) > 0:
                 has_pos_growth += 1
+        # if hash(key) % 100:
+        #     print(data)
     print(item_count)
     print(has_growth)
     print(has_pos_growth)
-    # c = Counter()
-    # for fips, date_data in state_and_county_data.items():
-    #     item_count += 1
-    #     days = len(date_data.keys())
-    #     c[days] += 1
-    #     if days > 3:
-    #         c['greater'] += 1
-    #     else:
-    #         c['less'] += 1
-    # print(c)
 
     with open(output_file, "w") as output:
         json.dump(state_and_county_data, output)
@@ -407,9 +396,10 @@ parser.add_argument("--state_input", help="File path to current state CSV.",
     default="us-states.csv")
 parser.add_argument("--output_file", help="File path to output JSON file.",
     default="covid_data.json")
-parser.add_argument("--moving_average_days",
-    help="The number of preceding days' growth changes to average.",
-    default=4, type=int)
+parser.add_argument("--growth_metric_days",
+    help="The number of preceding days' growth changes to calculate the "
+         "growth factor and doubling time from.",
+    default=5, type=int)
 parser.add_argument("--output_fips_first",
     help="Output JSON will be top-level keyed by FIPS if this arg is passed. "
          "If this arg is not passed, the top-level key of the output will be "
@@ -418,4 +408,4 @@ parser.add_argument("--output_fips_first",
 args = parser.parse_args()
 
 generate_json(args.county_input, args.state_input, args.output_file,
-    args.moving_average_days, args.output_fips_first)
+    args.growth_metric_days, args.output_fips_first)
