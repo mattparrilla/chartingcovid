@@ -148,7 +148,7 @@ def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
             # by the exp growth rate we found above.
             # New Total = e**Rate * Starting
             new_count = \
-                math.e**exp_growth_rate * preceding_case_counts[i + 1]
+                math.e**exp_growth_rate * previous_count
             increase = new_count - previous_count
         increases.append(increase)
 
