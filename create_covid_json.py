@@ -114,11 +114,14 @@ def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
 
     Example:
 
-    Let's say preceding_case_counts is [150, 120, 100].
-    100 -> 120 = 1.2 growth factor.
-    120 -> 150 = 1.25 growth factor.
-    We average the daily growth rates and record a 1.225 growth factor for
-    the current day.
+    Let's say preceding_case_counts is [150, 120, 100, 90, 80].
+    80  -> 90  = 10 new cases
+    90  -> 100 = 10 new cases
+    100 -> 120 = 20 new cases
+    120 -> 150 = 30 new cases
+    The growth factor is the ratio of current to previous new cases, so we have
+    growth factors of 1.5 (30/20), 2 (20/10), 1 (10/10)
+    We average the daily growth rates and record a 1.5 growth factor
     """
     # Find the absolute count of new daily cases for the previous
     # len(preceding_case_counts), which is growth_metric_days, days.
@@ -404,5 +407,4 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     generate_json(args.county_input, args.state_input, args.output_file,
-        args.moving_average_days, args.output_fips_first)
         args.growth_metric_days, args.output_fips_first)

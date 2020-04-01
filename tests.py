@@ -1,33 +1,14 @@
 import unittest
 from collections import defaultdict
 
-from create_covid_json import read_covid_file
+from create_covid_json import get_growth_factor
 
 
 class TestParseVariants(unittest.TestCase):
-    def test_single_variant(self):
-        expected_output = defaultdict(dict, {
-            "2020-01-21": {
-                "53061": {
-                    "cases": 1,
-                }
-            },
-            "2020-01-22": {
-                "53061": {
-                    "cases": 1,
-                }
-            },
-            "2020-01-23": {
-                "53061": {
-                    "cases": 1,
-                    "moving_avg": 0
-                }
-            }
-        })
-        output_data = defaultdict(dict)
-        self.assertEqual(read_covid_file("test_data/us-counties-mock.csv",
-                                         output_data, 3, False),
-                         expected_output)
+    def test_get_growth_factor(self):
+        input = [150, 120, 100, 90, 80]
+        output = 1.5
+        self.assertEqual(get_growth_factor(input), output)
 
 
 if __name__ == "__main__":
