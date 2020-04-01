@@ -12,88 +12,126 @@ Args:
       geographic entity code for the state/county. Otherwise, will be the date.
 """
 import argparse
-from collections import defaultdict
+from collections import defaultdict, Counter
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
+import math
 from statistics import mean
+from typing import Optional
 
 
-def read_covid_file(filename, output_data, moving_average_days,
-        output_fips_first, is_state_file=False):
+# The minimum number of cases needed for a given date-FIPS pair to produce a
+# growth factor and doubling time estimate.
+MIN_CASE_COUNT = 50
+
+
+def set_case_count(output_data: dict, date: str, fips: str, cases: int,
+        output_fips_first: bool) -> None:
     """
-    For a supplied csv file, containing either state or county covid data,
-    this function will output a date-keyed dict in the format:
-      {"YYYY-MM-DD":
-         {"FIPS_ID": {"cases": X, "moving_average": X.X}, ...}
-       ...
-      }
-
-      Example:
-      {"2020-03-27":
-         {"56043": {"cases": 12, "moving_average": 0.19}, ...}
-       ...
-      }
-
-    Alternatively, when output_fips_first=True, the format will be:
-      {"FIPS_ID":
-         {"YYYY-MM-DD": {"cases": X, "moving_average": X.X}, ...}
-       ...
-      }
-
-      Example:
-      {"56043":
-         {"2020-03-27": {"cases": 12, "moving_average": 0.19}, ...}
-       ...
-      }
+    Sets the given number of cases into output_data for a Date-FIPS combo.
+    Does this based on the output_fips_first option.
     """
-    # Offsets of the data within the file.
-    # Example: 2020-03-28,Snohomish,Washington,53061,912,23
-    DATE = 0
-    FIPS = 2 if is_state_file else 3
-    CASES = 3 if is_state_file else 4
+    if output_fips_first:
+        # output_data is keyed by FIPS, then date
+        # {"56043":
+        #    {"2020-03-27": {"cases": 12}, ...}
+        # }
+        output_data[fips][date] = {"cases": cases}
+    else:
+        # output_data is keyed by date, and then FIPS.
+        # {"2020-03-27":
+        #    {"56043": {"cases": 12}, ...}
+        # }
+        output_data[date][fips] = {"cases": cases}
 
-    with open(filename) as csv_file:
-        reader = csv.reader(csv_file, delimiter=',')
-        csv_list = list(reader)
-        earliest_date = \
-            datetime.strptime(csv_list[1][DATE], '%Y-%m-%d').date()
-        latest_date = datetime.strptime(
-            csv_list[-1][DATE], '%Y-%m-%d').date()
-        # Create an empty list for each entry with length being the total days
-        # we might have data for.
-        # This will store case count in reverse chronological order.
-        total_days_of_data = (latest_date - earliest_date).days + 1
-        inverse_chronological_case_data = \
-            defaultdict(lambda: [None]*total_days_of_data)
 
-        # Skip the initial header line.
-        for row in csv_list[1:]:
-            if output_fips_first:
-                # output_data is keyed by FIPS, then date
-                # {"56043":
-                #    {"2020-03-27": {"cases": 12}, ...}
-                # }
-                output_data[row[FIPS]][row[DATE]] = \
-                    {"cases": int(row[CASES] or 0)}
-            else:
-                # output_data is keyed by date, and then FIPS.
-                # {"2020-03-27":
-                #    {"56043": {"cases": 12}, ...}
-                # }
-                output_data[row[DATE]][row[FIPS]] = \
-                    {"cases": int(row[CASES] or 0)}
+def get_case_count(output_data: dict, date: str, fips: str,
+        output_fips_first: bool) -> Optional[int]:
+    """
+    Returns the number of cases recorded in output_data for a given
+    Date-FIPS combination. If no entry, returns None.
+    """
+    if output_fips_first:
+        entry = output_data[fips].get(date, None)
+        if entry:
+            return entry["cases"]
+    else:
+        entry = output_data[date].get(fips, None)
+        if entry:
+            return entry["cases"]
+    return None
 
-            # Store the number of cases in the fips list at the position which
-            # represents the number of days since the latest (current) date.
-            this_date = datetime.strptime(row[0], '%Y-%m-%d').date()
-            day_offset = (latest_date - this_date).days
-            fips_row = inverse_chronological_case_data[row[FIPS]]
-            fips_row[day_offset] = int(row[CASES] or 0)
 
-    # Add the daily moving average data.
-    # This is the percent daily moving average in new cases over the prior
-    # moving_average_days days.
+def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
+    """
+    """
+    # Find the absolute count of new daily cases for the previous
+    # len(preceding_case_counts), which is moving_average_days, days.
+    increases = []
+    can_calculate_growth_factor = True
+    for i in range(len(preceding_case_counts) - 1):
+        increase = \
+            preceding_case_counts[i] - preceding_case_counts[i + 1]
+        # Cases that have 0 increase introduce a division by 0 error
+        # when we calculate our moving average. Many of these cases
+        # will be days where there was a lack of reporting. We attempt
+        # to extrapolate a "most likely" value for these no-change
+        # days. We do this by calculating the exponential growth rate
+        # between the previous and following day case counts and using
+        # that rate to estimate a new value for the day.
+        if i != 0 and increase == 0:
+            next_count = preceding_case_counts[i - 1]
+            previous_count = preceding_case_counts[i + 1]
+            if next_count - previous_count == 0:
+                # If there are 3 case counts in a row that are equal,
+                # we decline to record a growth factor.
+                can_calculate_growth_factor = False
+                break
+            # The exp function is Final = (Starting)e**(Rate*Periods)
+            # So, Rate = -ln(Starting/Final)/Periods
+            # For step-by-step:
+            # https://www.mathway.com/popular-problems/Algebra/201906
+            num_periods = 2
+            exp_growth_rate = \
+                -math.log(previous_count / next_count) / num_periods
+            # To get the new count, we grow the previous day's count
+            # by the exp growth rate we found above.
+            # New Total = e**Rate * Starting
+            new_count = \
+                math.e**exp_growth_rate * preceding_case_counts[i + 1]
+            increase = new_count - previous_count
+        increases.append(increase)
+
+    # Find the growth in daily new cases for the previous
+    # moving_average_days days, if possible.
+    if can_calculate_growth_factor:
+        growth_in_daily_new_cases = []
+        for i in range(len(increases) - 1):
+            growth_in_daily_new_cases.append(
+                increases[i] / increases[i + 1])
+        return mean(growth_in_daily_new_cases)
+    return None
+
+
+def record_growth_factor(output_data: dict,
+        inverse_chronological_case_data: dict,
+        output_fips_first: bool, moving_average_days: int,
+        latest_date: datetime.date, total_days_of_data: int) -> dict:
+    """
+    Add the moving average growth factor to output_data.
+    This is the average relative daily growth in new cases over the prior
+    moving_average_days days.
+
+    Example:
+
+    Let's the previous 3 days have had total case counts of 160, 120, 100 and
+    that moving_average_days is 3.
+    100 -> 120 = 1.2 growth factor.
+    120 -> 160 = 1.25 growth factor.
+    We average the daily growth rates and record a 1.225 growth factor for
+    the current day.
+    """
     for outer_key, entries in output_data.items():
         for inner_key, cases_data in entries.items():
             if output_fips_first:
@@ -111,31 +149,59 @@ def read_covid_file(filename, output_data, moving_average_days,
             preceding_case_counts = \
                 inverse_chronological_case_data[fips_id][start:end]
             if len(preceding_case_counts) != moving_average_days or \
-                    None in preceding_case_counts:
-                # We don't have enough days of data, or have faulty data.
+                    None in preceding_case_counts or \
+                    preceding_case_counts[0] < MIN_CASE_COUNT:
+                # We don't have enough days of data, or have faulty data, or
+                # have less than the minimum number of cases to calculate
+                # a growth factor.
                 continue
 
             # Find the absolute count of new daily cases for the previous
             # moving_average_days days.
             increases = []
+            can_calculate_growth_factor = True
             for i in range(len(preceding_case_counts) - 1):
-                increases.append(preceding_case_counts[i] -
-                    preceding_case_counts[i + 1])
+                increase = \
+                    preceding_case_counts[i] - preceding_case_counts[i + 1]
+                # Cases that have 0 increase introduce a division by 0 error
+                # when we calculate our moving average. Many of these cases
+                # will be days where there was a lack of reporting. We attempt
+                # to extrapolate a "most likely" value for these no-change
+                # days. We do this by calculating the exponential growth rate
+                # between the previous and following day case counts and using
+                # that rate to estimate a new value for the day.
+                if i != 0 and increase == 0:
+                    next_count = preceding_case_counts[i - 1]
+                    previous_count = preceding_case_counts[i + 1]
+                    if next_count - previous_count == 0:
+                        # If there are 3 case counts in a row that are equal,
+                        # we decline to record a growth factor.
+                        can_calculate_growth_factor = False
+                        break
+                    # The exp function is Final = (Starting)e**(Rate*Periods)
+                    # So, Rate = -ln(Starting/Final)/Periods
+                    # For step-by-step:
+                    # https://www.mathway.com/popular-problems/Algebra/201906
+                    num_periods = 2
+                    exp_growth_rate = \
+                        -math.log(previous_count / next_count) / num_periods
+                    # To get the new count, we grow the previous day's count
+                    # by the exp growth rate we found above.
+                    # New Total = e**Rate * Starting
+                    new_count = \
+                        math.e**exp_growth_rate * preceding_case_counts[i + 1]
+                    increase = new_count - previous_count
+                increases.append(increase)
 
-            # Find the growth in daily new cases for the previous
-            # moving_average_days days.
-            # If any days have 0 increase, we skip, and assign a growth_factor
-            # of 0. This indicates the county is not growing or experiencing
-            # negative growth right now. Imperfect, but...
             growth_in_daily_new_cases = []
-            if all(increases):
+            # Find the growth in daily new cases for the previous
+            # moving_average_days days, if possible.
+            if can_calculate_growth_factor:
                 for i in range(len(increases) - 1):
                     growth_in_daily_new_cases.append(
                         increases[i] / increases[i + 1])
             else:
-                # Add a 0 just to avoid an error below. The growth_factor will
-                # be 0.
-                growth_in_daily_new_cases = [0]
+                continue
 
             if output_fips_first:
                 output_data[fips_id][date_string]['growth_factor'] = mean(
@@ -143,18 +209,192 @@ def read_covid_file(filename, output_data, moving_average_days,
             else:
                 output_data[date_string][fips_id]['growth_factor'] = mean(
                     growth_in_daily_new_cases)
-
     return output_data
 
 
-def generate_json(counties_file, states_file, output_file, moving_average_days,
-        output_fips_first):
+def record_case_counts(csv_data: list, output_data: dict,
+        inverse_chronological_case_data: dict,
+        output_fips_first: bool, moving_average_days: int,
+        is_state_file: bool, latest_date: datetime.date,
+        total_days_of_data: int) -> (dict, dict):
+    """
+    Returns a tuple of case count data and inverse chronological case data.
+
+    The case count data records the number of cases for each date-FIPS pair
+    in the input csv file into a dictionary.
+
+    If output_fips_first is False, the case count data will look like:
+        {"2020-03-27":
+            {"56043": {"cases": 12}, ...}
+        ...
+        }
+    Otherwise:
+        {"56043":
+            {"2020-03-27": {"cases": 12}, ...}
+        ...
+        }
+
+    The inverse_chronological_case_data is a dictionary of the format:
+        Key: FIPS
+        Value: List of inverse chronological case counts for that FIPS
+
+    Example:
+        {"56043": [45, 40, 34, 25, 23, ...], ...}
+    """
+    # Offsets of the data within the csv.
+    # Example: 2020-03-28,Snohomish,Washington,53061,912,23
+    DATE = 0
+    FIPS = 2 if is_state_file else 3
+    CASES = 3 if is_state_file else 4
+
+    # Skip the initial header line.
+    for row in csv_data[1:]:
+        # TODO(bhold): Handle NYC and KC
+        if not row[DATE] or not row[FIPS]:
+            continue
+
+        cases = int(row[CASES] or 0)
+        set_case_count(output_data, row[DATE], row[FIPS], cases,
+            output_fips_first)
+
+        this_date = datetime.strptime(row[DATE], '%Y-%m-%d').date()
+        # Indicates that how many previous days' case counts were adjusted
+        # down below, due to the current day's count being lower. In this
+        # case older counts were in error. Either the case(s) was
+        # incorrect or reassigned to another FIPS. This count indicates
+        # how many previous days' counts we need to adjust down in the
+        # inverse_chronological_case_data as well.
+        previous_days_adjusted_down = 0
+        previous_day = this_date - timedelta(days=1)
+        previous_day_string = previous_day.strftime('%Y-%m-%d')
+        while True:
+            previous_day_cases = get_case_count(output_data,
+                previous_day_string, row[FIPS], output_fips_first)
+            if previous_day_cases:
+                # Any preceding day with a case count higher than the
+                # current day's case count is considered to be in error.
+                # The erroneous case(s) was either found to be incorrect
+                # or was reassigned to another FIPS. We adjust these
+                # preceding days down to the count of the current.
+                if previous_day_cases > cases:
+                    previous_days_adjusted_down += 1
+                    set_case_count(output_data, previous_day_string,
+                        row[FIPS], cases, output_fips_first)
+                    # Reassign previous_day and previous_day_string to
+                    # continue the loop, looking for preceding entries
+                    # that were also higher than the current.
+                    previous_day = previous_day - timedelta(days=1)
+                    previous_day_string = \
+                        previous_day.strftime('%Y-%m-%d')
+                    continue
+            # We have no more preceding days with a higher count.
+            break
+
+        # Store the number of cases in the fips list at the position which
+        # represents the number of days since the latest (current) date.
+        day_offset = (latest_date - this_date).days
+        fips_row = inverse_chronological_case_data[row[FIPS]]
+        fips_row[day_offset] = cases
+        # If the previous days had an erroneous count (explained above),
+        # we adjust them down in this list as well.
+        if previous_days_adjusted_down > 0:
+            for i in range(1, previous_days_adjusted_down + 1):
+                fips_row[day_offset + i] = cases
+
+    return output_data, inverse_chronological_case_data
+
+
+def generate_covid_data(filename: str, output_data: dict,
+        moving_average_days: int, output_fips_first: bool,
+        is_state_file: bool=False) -> dict:
+    """
+    For a supplied csv file, containing either state or county covid data,
+    this function will output a date-keyed dict in the format:
+      {"YYYY-MM-DD":
+         {"FIPS_ID": {"cases": X, "growth_factor": X.X}, ...}
+       ...
+      }
+
+      Example:
+      {"2020-03-27":
+         {"56043": {"cases": 12, "growth_factor": 1.19}, ...}
+       ...
+      }
+
+    Alternatively, when output_fips_first=True, the format will be:
+      {"FIPS_ID":
+         {"YYYY-MM-DD": {"cases": X, "growth_factor": X.X}, ...}
+       ...
+      }
+
+      Example:
+      {"56043":
+         {"2020-03-27": {"cases": 12, "growth_factor": 1.19}, ...}
+       ...
+      }
+    """
+    # Offsets of the data within the csv.
+    # Example: 2020-03-28,Snohomish,Washington,53061,912,23
+    DATE = 0
+
+    with open(filename) as csv_file:
+        reader = csv.reader(csv_file, delimiter=',')
+        csv_list = list(reader)
+        earliest_date = \
+            datetime.strptime(csv_list[1][DATE], '%Y-%m-%d').date()
+        latest_date = datetime.strptime(
+            csv_list[-1][DATE], '%Y-%m-%d').date()
+        # Create an empty list for each entry with length being the total days
+        # we might have data for.
+        # This will store case count in reverse chronological order.
+        total_days_of_data = (latest_date - earliest_date).days + 1
+        inverse_chronological_case_data = \
+            defaultdict(lambda: [None]*total_days_of_data)
+
+        output_data, inverse_chronological_case_data = record_case_counts(
+                csv_list, output_data, inverse_chronological_case_data,
+                output_fips_first, moving_average_days, is_state_file,
+                latest_date, total_days_of_data)
+
+
+
+        output_data = record_growth_factor(output_data,
+                inverse_chronological_case_data, output_fips_first,
+                moving_average_days, latest_date, total_days_of_data)
+
+        return output_data
+
+
+def generate_json(counties_file: str, states_file: str, output_file: str,
+        moving_average_days: int, output_fips_first: bool) -> None:
     empty_data = defaultdict(dict)
-    state_data = read_covid_file(
+    state_data = generate_covid_data(
         states_file, empty_data, moving_average_days, output_fips_first,
         is_state_file=True)
-    state_and_county_data = read_covid_file(
+    state_and_county_data = generate_covid_data(
         counties_file, state_data, moving_average_days, output_fips_first)
+    item_count = 0
+    has_growth = 0
+    has_pos_growth = 0
+    for key, data in state_and_county_data["2020-03-30"].items():
+        item_count += 1
+        if data.get("growth_factor", None):
+            has_growth += 1
+            if float(data["growth_factor"]) > 0:
+                has_pos_growth += 1
+    print(item_count)
+    print(has_growth)
+    print(has_pos_growth)
+    # c = Counter()
+    # for fips, date_data in state_and_county_data.items():
+    #     item_count += 1
+    #     days = len(date_data.keys())
+    #     c[days] += 1
+    #     if days > 3:
+    #         c['greater'] += 1
+    #     else:
+    #         c['less'] += 1
+    # print(c)
 
     with open(output_file, "w") as output:
         json.dump(state_and_county_data, output)
@@ -169,7 +409,7 @@ parser.add_argument("--output_file", help="File path to output JSON file.",
     default="covid_data.json")
 parser.add_argument("--moving_average_days",
     help="The number of preceding days' growth changes to average.",
-    default=5, type=int)
+    default=4, type=int)
 parser.add_argument("--output_fips_first",
     help="Output JSON will be top-level keyed by FIPS if this arg is passed. "
          "If this arg is not passed, the top-level key of the output will be "
