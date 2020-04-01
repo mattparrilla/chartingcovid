@@ -140,16 +140,6 @@ export default async function initTrendChart(dataPromise, fips) {
     return reverseIdx % 5 ? "none" : "initial";
   });
 
-  // Update chart scale on selection
-  const scales = document.querySelectorAll("#js_chart_scale_selector span");
-  scales.forEach(scale => {
-    scale.addEventListener("click", () => {
-      scales.forEach(el => el.classList.remove("active"));
-      scale.classList.add("active");
-      updateChart(chartData);
-    });
-  });
-
   const chartTitleMap = {
     cases: "Confirmed Cases",
     cases_per_capita: "Confirmed Cases Per Capita",
