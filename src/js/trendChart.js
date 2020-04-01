@@ -56,7 +56,7 @@ export function updateChart(data) {
   const x = getChartX(data);
   const yMax = d3.max(data, d => d[metric]);
   const y = (scale === "log" ? d3.scaleSymlog() : d3.scaleLinear())
-    .domain([d3.min(data, d => d[metric]), yMax])
+    .domain([d3.min(data, d => d[metric]), yMax]).nice()
     .range(yRange);
 
   if (scale === "log") {
@@ -95,7 +95,7 @@ export default async function initTrendChart(dataPromise, fips) {
   const x = getChartX(chartData);
   const y = d3.scaleLinear()
       .domain([d3.min(chartData, d => d.cases), d3.max(chartData, d => d.cases)]).nice()
-      .range([height - margin.bottom, margin.top]);
+      .range(yRange);
 
   const svg = d3.select("#js_trend_chart")
     .append("svg")

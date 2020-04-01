@@ -38,8 +38,9 @@ export async function updateSelectors(data, stateFips, countyFips) {
   }
 }
 
-export default async function initStateSelector(data, stateFips) {
+export default async function initStateSelector(data) {
   const fipsData = await data.fips;
+  const stateFips = window.locationManager.getStateFips();
   const stateSelector = document.getElementById("js_select_state");
   const countySelector = document.getElementById("js_select_county");
 
@@ -49,19 +50,12 @@ export default async function initStateSelector(data, stateFips) {
     .forEach(populateSelector(fipsData, stateSelector, "state", stateFips));
 
   // event listener for state select element
-  stateSelector.addEventListener("change", (e) => {
-    const state = urlifyName(fipsData[e.target.value].state);
-    router.navigateTo(`/state/${state}`);
+  stateSelector.addEventListener("change", async (e) => {
+    window.locationManager.setState(e.target.value);
   });
 
   // event listener for county select element
   countySelector.addEventListener("change", (e) => {
-    if (e.target.value) {
-      const state = urlifyName(fipsData[e.target.value].state);
-      const county = urlifyName(fipsData[e.target.value].county);
-      router.navigateTo(`/state/${state}/county/${county}`);
-    } else {
-      alert("What should we do?");
-    }
+    window.locationManager.setCounty(e.target.value);
   });
 }

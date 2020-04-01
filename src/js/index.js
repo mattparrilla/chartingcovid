@@ -5,9 +5,13 @@ import { stateToFips, countyToFips } from './utilities';
 import initStateSelector, { updateSelectors } from './location';
 import initCaseCountMap from "./caseCountMap";
 import router from './router';
+import initDataManager from './dataManager';
+import initLocationManager from './locationManager';
 
 function init(data) {
   initStateSelector(data);
+  initLocationManager();
+  initDataManager();
 }
 
 // TODO: handle 404s (replace alerts)
@@ -26,7 +30,6 @@ window.addEventListener("DOMContentLoaded", () => {
   // TODO: do I need this object?
   window.chartingCovid = {};
   router.add('', () => {
-    window.chartingCovid.fips = null;
     tableDisplayToggle.style.display = "block";
     initCaseCountMap(data);
     initTrendChart(data);
