@@ -29,7 +29,7 @@ function sortRowsByColumn(sortColumn) {
 function placeCell(state, county) {
   const stateUrl = urlifyName(state);
   if (county) {
-    const countyUrl = urlifyName(county.replace(' County', ''));
+    const countyUrl = urlifyName(county);
     return `<td><a href="/state/${stateUrl}/county/${countyUrl}">${county}</td>`;
   }
   return `<td><a href="/state/${stateUrl}">${state}</td>`;
