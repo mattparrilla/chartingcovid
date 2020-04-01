@@ -1,44 +1,27 @@
-import { json } from 'd3';
+// Replace spaces with '-' and convert to lowercase
+export function urlifyName(name) {
+  return name.replace(/\s/g, '-').toLowerCase();
+}
 
-export async function countyToFips(state, county) {
-  const fips = await json("/data/fips_data.json");
+export async function countyToFips(fipsData, state, county) {
+  const fips = await fipsData;
   return Object.keys(fips).find(item => (
     // State in FIPS json is ex: New Jersey
-    fips[item].state.replace(/\s/g, "-").toLowerCase() === state
+    urlifyName(fips[item].state) === state
     // County in FIPS json is ex: Bergen County
-      && fips[item].county.replace(" County", "").replace(/\s/g, "-").toLowerCase() === county
+      && urlifyName(fips[item].county.replace(" County", "")) === county
   ));
 }
 
-export async function stateToFips(state) {
-  const fips = await json("/data/fips_data.json");
+export async function stateToFips(fipsData, state) {
+  const fips = await fipsData;
   return Object.keys(fips).find(item => (
-    fips[item].state.replace(/\s/g, '-').toLowerCase() === state
+    urlifyName(fips[item].state) === state
   ));
-}
-
-export function fetchData() {
-  return Promise.all([
-    json("/data/fips_data.json"),
-    json("/data/covid_cases_by_date.json"),
-    json("/data/counties-albers-10m2.json")
-  ]);
 }
 
 export function filterOutCounties(data) {
-  return Object.keys(data)
-    .reduce((stateData, fips) => {
-      if (data[fips].county === "") {
-        return [
-          ...stateData,
-          {
-            fips,
-            ...data[fips]
-          }
-        ];
-      }
-      return stateData;
-    }, []);
+  return Object.keys(data).filter(fips => data[fips].county === "");
 }
 
 // Sort dates in ascending order

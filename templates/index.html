@@ -1,8 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <div>
+    <a href="/">United States</a>
+    <select name="state" id="js_select_state">
+      <option value="">Choose State</option>
+    </select>
+    <select name="county" id="js_select_county">
+      <option value="">Choose County</option>
+    </select>
+  </div>
   <h1>Charting COVID-19</h1>
+  <p>The story of COVID-19 is a story of trends. We've been told to practice
+     social distancing in order to flatten the curve, but how are we doing?</p>
   <div id="js_map"></div>
-  <div id="js_trend_chart"></div>
+  {% include "trend_chart.html" %}
   {% include "table.html" %}
 {% endblock %}

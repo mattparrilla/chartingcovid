@@ -1,49 +1,60 @@
-import trendChart from "./trendChart";
-import initTrendChart from "./trendChart";
-import initDataTable from './dataTable';
-import initCaseCountMap from "./caseCountMap";
-
-import Router from 'vanilla-router';
+import { json } from 'd3';
 import initTrendChart from './trendChart';
 import initDataTable from './dataTable';
 import { stateToFips, countyToFips } from './utilities';
-
-const router = new Router({
-  mode: 'history'
-});
+import initLocationSelector from './location';
+import initCaseCountMap from "./caseCountMap";
+import router from './router';
 
 window.addEventListener("DOMContentLoaded", () => {
-  // TODO: create separate init and update functions for elements, all should
-  // initialize without data
+  // kick off data calls
+  const data = {
+    fips: json("/data/fips_data.json"),
+    cases: json("/data/covid_cases_by_date.json"),
+    countyOutline: json("/data/counties-albers-10m2.json")
+  };
 
-  // TODO: get fetchData promise here, await it in the view block
+  const tableDisplayToggle = document.getElementById("js_table_county_vs_state");
+  window.chartingCovid = {};
 
   router.add('', () => {
-    initTrendChart();
-    initDataTable();
-    initCaseCountMap();
+    window.chartingCovid.fips = null;
+    tableDisplayToggle.style.display = "block";
+    initCaseCountMap(data);
+    initTrendChart(data);
+    initDataTable({ data });
+    initLocationSelector(data);
   });
 
   router.add('state/(:any)', async (state) => {
-    const fips = await stateToFips(state);
+    tableDisplayToggle.style.display = "none";
+    const fips = await stateToFips(data.fips, state);
     console.log(`State: ${state}; FIPS: ${fips}`);
     // TODO: handle if FIPS not found
     if (!fips) {
       window.alert(`fips for: ${state} not found`);
     }
-    initTrendChart(fips);
-    initDataTable(fips);
+    window.chartingCovid.fips = fips;
+    initTrendChart(data, fips);
+    initDataTable({ data, state });
+    initLocationSelector(data, fips);
   });
 
   router.add('state/(:any)/county/(:any)', async (state, county) => {
-    const fips = await countyToFips(state, county);
-    console.log(`State: ${state}; County: ${county}; FIPS: ${fips}`);
+    tableDisplayToggle.style.display = "none";
+    const countyFips = await countyToFips(data.fips, state, county);
+    const stateFips = await stateToFips(data.fips, state);
+
+    console.log(`State: ${state}; County: ${county}; FIPS: ${countyFips}`);
     // TODO: handle if FIPS not found
-    if (!fips) {
+    if (!countyFips) {
       window.alert(`fips for: ${county}, ${state} not found`);
     }
-    initTrendChart(fips);
-    initDataTable(fips);
+
+    window.chartingCovid.fips = countyFips;
+    initTrendChart(data, countyFips);
+    initDataTable({ data, state, countyFips });
+    initLocationSelector(data, stateFips, countyFips);
   });
 
   router.addUriListener();
