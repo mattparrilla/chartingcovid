@@ -4,3 +4,4 @@ __pycache__
 static/css
 static/js
 dist
+.idea
