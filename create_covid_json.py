@@ -12,7 +12,7 @@ Args:
       geographic entity code for the state/county. Otherwise, will be the date.
 """
 import argparse
-from collections import defaultdict, Counter
+from collections import defaultdict
 import csv
 from datetime import datetime, timedelta
 import json
@@ -75,20 +75,35 @@ def get_exp_growth_rate(final: Num, starting: Num, num_periods: Num) -> float:
     return -math.log(starting / final) / num_periods
 
 
-def get_doubling_time(preceding_case_counts: list) -> Optional[float]:
+def get_doubling_time(exp_growth_rate: float) -> float:
     """
-    This is the predicted amount of time, in days, that it will take for the
-    list of case counts provided to double from the most recent entry's count.
+    This is the amount of time that it will take for the provided exponential
+    growth rate to case a count to double.
 
     The formula to calculate doubling time is:
         ln(2) / ln(1 + Rate)
     """
-    number_of_days = len(preceding_case_counts)
-    earliest_count = preceding_case_counts[-1]
-    latest_count = preceding_case_counts[0]
-    exp_growth_rate = get_exp_growth_rate(
-        latest_count, earliest_count, number_of_days)
     return math.log(2) / math.log(1 + exp_growth_rate)
+
+
+def get_averaged_doubling_time(preceding_case_counts: list) -> float:
+    """
+    The idea here is to return the average estimated doubling time of each of
+    the preceding counts and the current count.
+
+    We calculate the exponential growth rate between each of the preceding
+    counts and the current count, and then return the average doubling time
+    estimated by those growth rates.
+    """
+    growth_rates = []
+    latest_count = preceding_case_counts[0]
+    for i in range(1, len(preceding_case_counts)):
+        earlier_count = preceding_case_counts[i]
+        exp_growth_rate = get_exp_growth_rate(
+            latest_count, earlier_count, num_periods=i)
+        if exp_growth_rate > 0:
+            growth_rates.append(exp_growth_rate)
+    return mean([get_doubling_time(r) for r in growth_rates])
 
 
 def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
@@ -197,7 +212,7 @@ def record_growth_metrics(output_data: dict,
                     output_data[date_string][fips_id]['growth_factor'] = \
                         growth_factor
 
-            doubling_time = get_doubling_time(preceding_case_counts)
+            doubling_time = get_averaged_doubling_time(preceding_case_counts)
             if doubling_time:
                 if output_fips_first:
                     output_data[fips_id][date_string]['doubling_time'] = \
@@ -205,9 +220,6 @@ def record_growth_metrics(output_data: dict,
                 else:
                     output_data[date_string][fips_id]['doubling_time'] = \
                         doubling_time
-            if date_string == "2020-03-30" and preceding_case_counts[0] > 100:
-                print(output_data[date_string][fips_id])
-                print(preceding_case_counts)
     return output_data
 
 
@@ -249,7 +261,7 @@ def record_case_counts(csv_data: list, output_data: dict,
     # Skip the initial header line.
     for row in csv_data[1:]:
         # TODO(bhold): Handle NYC and KC
-        if not row[DATE] or not row[FIPS]:
+        if not row[FIPS]:
             continue
 
         cases = int(row[CASES] or 0)
@@ -370,20 +382,6 @@ def generate_json(counties_file: str, states_file: str, output_file: str,
         is_state_file=True)
     state_and_county_data = generate_covid_data(
         counties_file, state_data, growth_metric_days, output_fips_first)
-    item_count = 0
-    has_growth = 0
-    has_pos_growth = 0
-    for key, data in state_and_county_data["2020-03-30"].items():
-        item_count += 1
-        if data.get("growth_factor", None):
-            has_growth += 1
-            if float(data["growth_factor"]) > 0:
-                has_pos_growth += 1
-        # if hash(key) % 100:
-        #     print(data)
-    print(item_count)
-    print(has_growth)
-    print(has_pos_growth)
 
     with open(output_file, "w") as output:
         json.dump(state_and_county_data, output)
