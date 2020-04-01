@@ -32,3 +32,8 @@ h1 {
   box-shadow: variables.$box_shadow;
   font-weight: 600;
 }
+
+// Only display if state is selected
+#js_select_county {
+  display: none;
+}

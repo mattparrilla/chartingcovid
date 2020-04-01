@@ -1,8 +1,13 @@
 import * as d3 from 'd3';
 import { sortDateString, filterOutCounties } from './utilities';
 
+const margin = { top: 30, right: 90, bottom: 30, left: 20 };
+const height = 500;
+const width = 1000;
+const yRange = [height - margin.bottom, margin.top];
 
-export async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
+// Munge the chart data we care about
+async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
   const fipsData = await dataPromise.fips;
   const casesByDate = await dataPromise.cases;
   const dates = sortDateString(casesByDate);
@@ -35,17 +40,24 @@ export async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
   return trendData.slice(Math.max(trendData.length - numDays, 1));
 }
 
-function updateChart({ data, svg, x, y }) {
+// given our chart's data generate an X scale
+function getChartX(data) {
+  return d3.scaleBand()
+    .domain(d3.range(data.length))
+    .range([margin.left, width - margin.right])
+    .padding(0.1);
+}
+
+export function updateChart(data) {
+  const svg = d3.select("#js_trend_chart svg");
   const { metric, scale } = document
     .querySelectorAll("#js_chart_metric_selector .active")[0].dataset;
 
-  x.domain(d3.range(data.length));
+  const x = getChartX(data);
   const yMax = d3.max(data, d => d[metric]);
-  y.domain([d3.min(data, d => d[metric]), yMax]).nice();
-
-  const updatedY = (scale === "log" ? d3.scaleSymlog() : d3.scaleLinear())
-    .domain(y.domain())
-    .range(y.range());
+  const y = (scale === "log" ? d3.scaleSymlog() : d3.scaleLinear())
+    .domain([d3.min(data, d => d[metric]), yMax])
+    .range(yRange);
 
   if (scale === "log") {
     // build list of logarithmic ticks (1,2,3....10, 20, 30,..100, 200, 300...)
@@ -58,12 +70,12 @@ function updateChart({ data, svg, x, y }) {
       }
     }
     svg.select(".y.axis")
-      .call(d3.axisRight(updatedY)
+      .call(d3.axisRight(y)
         .tickValues(ticks.filter(tick => tick < yMax))
         .tickFormat(i => displayTicks.includes(i) ? i.toLocaleString() : ""));
   } else {
     svg.select(".y.axis")
-      .call(d3.axisRight(updatedY));
+      .call(d3.axisRight(y));
   }
 
   // update bars
@@ -72,23 +84,15 @@ function updateChart({ data, svg, x, y }) {
     .transition()
     .duration(1000)
     .attr("x", (d, i) => x(i))
-    .attr("y", d => updatedY(d[metric]))
-    .attr("height", d => updatedY(0) - updatedY(d[metric]))
+    .attr("y", d => y(d[metric]))
+    .attr("height", d => y(0) - y(d[metric]))
     .attr("width", x.bandwidth());
 }
 
 export default async function initTrendChart(dataPromise, fips) {
-  const margin = { top: 30, right: 90, bottom: 30, left: 20 };
-  const height = 500;
-  const width = 1000;
-
   const chartData = await getTrendChartData({ dataPromise, fips });
 
-  const x = d3.scaleBand()
-    .domain(d3.range(chartData.length))
-    .range([margin.left, width - margin.right])
-    .padding(0.1);
-
+  const x = getChartX(chartData);
   const y = d3.scaleLinear()
       .domain([d3.min(chartData, d => d.cases), d3.max(chartData, d => d.cases)]).nice()
       .range([height - margin.bottom, margin.top]);
@@ -136,20 +140,13 @@ export default async function initTrendChart(dataPromise, fips) {
     return reverseIdx % 5 ? "none" : "initial";
   });
 
-  const chart = {
-    data: chartData,
-    svg,
-    x,
-    y,
-  };
-
   // Update chart scale on selection
   const scales = document.querySelectorAll("#js_chart_scale_selector span");
   scales.forEach(scale => {
     scale.addEventListener("click", () => {
       scales.forEach(el => el.classList.remove("active"));
       scale.classList.add("active");
-      updateChart(chart);
+      updateChart(chartData);
     });
   });
 
@@ -167,7 +164,7 @@ export default async function initTrendChart(dataPromise, fips) {
       metric.classList.add("active");
 
       document.getElementById("js_chart_metric").innerHTML = chartTitleMap[metric.dataset.metric];
-      updateChart(chart);
+      updateChart(chartData);
     });
   });
 }
