@@ -278,28 +278,25 @@ def record_case_counts(csv_data: list, output_data: dict,
         previous_days_adjusted_down = 0
         previous_day = this_date - timedelta(days=1)
         previous_day_string = previous_day.strftime('%Y-%m-%d')
-        while True:
+        previous_day_cases = get_case_count(output_data,
+            previous_day_string, row[FIPS], output_fips_first)
+        # Any preceding day with a case count higher than the
+        # current day's case count is considered to be in error.
+        # The erroneous case(s) was either found to be incorrect
+        # or was reassigned to another FIPS. We adjust these
+        # preceding days down to the count of the current.
+        while previous_day_cases and previous_day_cases > cases:
+            previous_days_adjusted_down += 1
+            set_case_count(output_data, previous_day_string,
+                row[FIPS], cases, output_fips_first)
+            # Reassign previous_day and previous_day_string to
+            # continue the loop, looking for preceding entries
+            # that were also higher than the current.
+            previous_day = previous_day - timedelta(days=1)
+            previous_day_string = \
+                previous_day.strftime('%Y-%m-%d')
             previous_day_cases = get_case_count(output_data,
                 previous_day_string, row[FIPS], output_fips_first)
-            if previous_day_cases:
-                # Any preceding day with a case count higher than the
-                # current day's case count is considered to be in error.
-                # The erroneous case(s) was either found to be incorrect
-                # or was reassigned to another FIPS. We adjust these
-                # preceding days down to the count of the current.
-                if previous_day_cases > cases:
-                    previous_days_adjusted_down += 1
-                    set_case_count(output_data, previous_day_string,
-                        row[FIPS], cases, output_fips_first)
-                    # Reassign previous_day and previous_day_string to
-                    # continue the loop, looking for preceding entries
-                    # that were also higher than the current.
-                    previous_day = previous_day - timedelta(days=1)
-                    previous_day_string = \
-                        previous_day.strftime('%Y-%m-%d')
-                    continue
-            # We have no more preceding days with a higher count.
-            break
 
         # Store the number of cases in the fips list at the position which
         # represents the number of days since the latest (current) date.
@@ -405,5 +402,6 @@ parser.add_argument("--output_fips_first",
     action="store_true")
 args = parser.parse_args()
 
-generate_json(args.county_input, args.state_input, args.output_file,
-    args.growth_metric_days, args.output_fips_first)
+if __name__ == "__main__":
+    generate_json(args.county_input, args.state_input, args.output_file,
+        args.growth_metric_days, args.output_fips_first)
