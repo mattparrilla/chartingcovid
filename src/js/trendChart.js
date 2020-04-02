@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import { sortDateString, filterOutCounties } from './utilities';
 
 const margin = { top: 30, right: 90, bottom: 30, left: 20 };
 const height = 500;
@@ -7,37 +6,48 @@ const width = 1000;
 const yRange = [height - margin.bottom, margin.top];
 
 // Munge the chart data we care about
-async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
-  const fipsData = await dataPromise.fips;
-  const casesByDate = await dataPromise.cases;
-  const dates = sortDateString(casesByDate);
+async function getTrendChartData() {
+  const dates = (await window.dataManager.getDates()).reverse();
+  const numDays = 30;
+  const sliceAt = Math.max(dates.length - numDays, 1);
 
   // if no fips, we want whole country
-  if (fips == null) {
-    const states = filterOutCounties(fipsData);
-    return dates.map(date => ({
-      date,
-      cases: states.reduce((countryCases, state) => {
-        const stateCases = casesByDate
-          && casesByDate[date][state]
-          && casesByDate[date][state].cases;
-        return countryCases + (stateCases || 0);
-      }, 0)
-    }));
+  if (window.locationManager.isCountryView()) {
+    const states = await window.dataManager.getAllStates();
+
+    const countryPopulation = await states.reduce(async (totalPopulation, { fips }) => {
+      const populationSum = await totalPopulation;
+      const statePopulation = await window.dataManager.getPopulation(fips);
+      return populationSum + statePopulation;
+    }, Promise.resolve(0));
+
+    // for each date, sum each states casese
+    return Promise.all(dates.map(async date => {
+      const cases = await states.reduce(async (countryCases, { fips: stateFips }) => {
+        const casesSum = await countryCases;
+        const stateCases = await window.dataManager.getCasesGivenDateFips(date, stateFips);
+        return casesSum + (stateCases || 0);
+      }, Promise.resolve(0));
+      return Promise.resolve({
+        date,
+        cases,
+        casesPerCapita: cases / countryPopulation
+      });
+    }).slice(sliceAt));
   }
 
   // Get data by FIPS
-  const trendData = dates.map(date => {
-    const cases = (
-      casesByDate[date] && casesByDate[date][fips] && casesByDate[date][fips].cases
-    ) || 0;
-    return {
+  const fips = await window.locationManager.getCountyFips()
+    || await window.locationManager.getStateFips();
+  return Promise.all(dates.map(async date => {
+    const cases = await window.dataManager.getCasesGivenDateFips(date, fips) || 0;
+    const population = await window.dataManager.getPopulation(fips);
+    return Promise.resolve({
       date,
       cases,
-      cases_per_capita: cases / fipsData[fips].population,
-    };
-  });
-  return trendData.slice(Math.max(trendData.length - numDays, 1));
+      cases_per_capita: cases / population
+    });
+  }).slice(sliceAt));
 }
 
 // given our chart's data generate an X scale
@@ -48,7 +58,8 @@ function getChartX(data) {
     .padding(0.1);
 }
 
-export function updateChart(data) {
+export async function updateTrendChart() {
+  const data = await getTrendChartData();
   const svg = d3.select("#js_trend_chart svg");
   const { metric, scale } = document
     .querySelectorAll("#js_chart_metric_selector .active")[0].dataset;
@@ -56,7 +67,7 @@ export function updateChart(data) {
   const x = getChartX(data);
   const yMax = d3.max(data, d => d[metric]);
   const y = (scale === "log" ? d3.scaleSymlog() : d3.scaleLinear())
-    .domain([d3.min(data, d => d[metric]), yMax])
+    .domain([d3.min(data, d => d[metric]), yMax]).nice()
     .range(yRange);
 
   if (scale === "log") {
@@ -89,13 +100,13 @@ export function updateChart(data) {
     .attr("width", x.bandwidth());
 }
 
-export default async function initTrendChart(dataPromise, fips) {
-  const chartData = await getTrendChartData({ dataPromise, fips });
+export default async function initTrendChart() {
+  const chartData = await getTrendChartData();
 
   const x = getChartX(chartData);
   const y = d3.scaleLinear()
       .domain([d3.min(chartData, d => d.cases), d3.max(chartData, d => d.cases)]).nice()
-      .range([height - margin.bottom, margin.top]);
+      .range(yRange);
 
   const svg = d3.select("#js_trend_chart")
     .append("svg")
@@ -154,7 +165,7 @@ export default async function initTrendChart(dataPromise, fips) {
       metric.classList.add("active");
 
       document.getElementById("js_chart_metric").innerHTML = chartTitleMap[metric.dataset.metric];
-      updateChart(chartData);
+      updateTrendChart();
     });
   });
 }

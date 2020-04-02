@@ -21,7 +21,8 @@
       "indent": "off",
       "quotes": "off",
       "object-curly-newline": "off",
-      "no-confusing-arrow": "off"
+      "no-confusing-arrow": "off",
+      "operator-linebreak": ["error", "after"]
     }
 }
 
