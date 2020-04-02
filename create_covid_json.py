@@ -314,12 +314,20 @@ def record_case_counts(csv_data: list, output_data: dict,
 
     return output_data, inverse_chronological_case_data
 
+def read_data_from_csv(filename: str) -> list:
+    """
+    Read a CSV into a list.
+    """
+    with open(filename) as csv_file:
+        reader = csv.reader(csv_file, delimiter=',')
+        return list(reader)
 
-def generate_covid_data(filename: str, output_data: dict,
+
+def generate_covid_data(covid_data: list, output_data: dict,
         growth_metric_days: int, output_fips_first: bool,
         is_state_file: bool=False) -> dict:
     """
-    For a supplied csv file, containing either state or county covid data,
+    For supplied list containing either state or county covid data,
     this function will output a date-keyed dict in the format:
       {"YYYY-MM-DD":
          {"FIPS_ID": {"cases": X, "growth_factor": X.X}, ...}
@@ -348,40 +356,39 @@ def generate_covid_data(filename: str, output_data: dict,
     # Example: 2020-03-28,Snohomish,Washington,53061,912,23
     DATE = 0
 
-    with open(filename) as csv_file:
-        reader = csv.reader(csv_file, delimiter=',')
-        csv_list = list(reader)
-        earliest_date = \
-            datetime.strptime(csv_list[1][DATE], '%Y-%m-%d').date()
-        latest_date = datetime.strptime(
-            csv_list[-1][DATE], '%Y-%m-%d').date()
-        # Create an empty list for each entry with length being the total days
-        # we might have data for.
-        # This will store case count in reverse chronological order.
-        total_days_of_data = (latest_date - earliest_date).days + 1
-        inverse_chronological_case_data = \
-            defaultdict(lambda: [None]*total_days_of_data)
+    earliest_date = \
+        datetime.strptime(covid_data[1][DATE], '%Y-%m-%d').date()
+    latest_date = datetime.strptime(
+        covid_data[-1][DATE], '%Y-%m-%d').date()
+    # Create an empty list for each entry with length being the total days
+    # we might have data for.
+    # This will store case count in reverse chronological order.
+    total_days_of_data = (latest_date - earliest_date).days + 1
+    inverse_chronological_case_data = \
+        defaultdict(lambda: [None]*total_days_of_data)
 
-        output_data, inverse_chronological_case_data = record_case_counts(
-                csv_list, output_data, inverse_chronological_case_data,
-                output_fips_first, growth_metric_days, is_state_file,
-                latest_date, total_days_of_data)
+    output_data, inverse_chronological_case_data = record_case_counts(
+            covid_data, output_data, inverse_chronological_case_data,
+            output_fips_first, growth_metric_days, is_state_file,
+            latest_date, total_days_of_data)
 
-        output_data = record_growth_metrics(output_data,
-                inverse_chronological_case_data, output_fips_first,
-                growth_metric_days, latest_date, total_days_of_data)
+    output_data = record_growth_metrics(output_data,
+            inverse_chronological_case_data, output_fips_first,
+            growth_metric_days, latest_date, total_days_of_data)
 
-        return output_data
+    return output_data
 
 
 def generate_json(counties_file: str, states_file: str, output_file: str,
         growth_metric_days: int, output_fips_first: bool) -> None:
     empty_data = defaultdict(dict)
+    state_csv = read_data_from_csv(states_file)
     state_data = generate_covid_data(
-        states_file, empty_data, growth_metric_days, output_fips_first,
+        state_csv, empty_data, growth_metric_days, output_fips_first,
         is_state_file=True)
+    state_and_county_csv = read_data_from_csv(counties_file)
     state_and_county_data = generate_covid_data(
-        counties_file, state_data, growth_metric_days, output_fips_first)
+        state_and_county_csv, state_data, growth_metric_days, output_fips_first)
 
     with open(output_file, "w") as output:
         json.dump(state_and_county_data, output)
