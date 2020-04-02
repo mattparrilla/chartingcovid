@@ -16,7 +16,8 @@ function drawMap(countyOutline) {
     .data(topojson.feature(countyOutline, countyOutline.objects.counties).features)
     .join("path")
       .attr("class", "map_county")
-      .attr("d", path);
+      .attr("d", path)
+      .attr("fill", "white");
 
   // Draw state borders
   svg.append("path")
@@ -30,29 +31,33 @@ function drawMap(countyOutline) {
       .attr("d", path);
 }
 
-async function updateMap() {
-  const caseData = await window.dataManager.getMostRecentData();
+async function updateMap(daysPrior = 0) {
+  const caseData = await window.dataManager.getDaysPriorData(daysPrior);
+  const mostRecentData = await window.dataManager.getMostRecentData();
   const extent =
-    d3.extent((Object.values(caseData)).map(c => Math.log(c.cases)));
+    d3.extent((Object.values(mostRecentData)).map(c => Math.log(c.cases)));
   const color = d3.scaleQuantize(extent, d3.schemeOranges[9]);
 
   svg.selectAll(".map_county")
     .attr("fill", d => color(caseData[d.id] ? Math.log(caseData[d.id].cases) : 0));
 }
 
-function removeStates(today) {
-  const keys = Object.keys(today);
-  keys.forEach(async (key) => {
-    const entry = await window.dataManager.getFipsEntry(key);
-    if (entry == null || entry.county.length === 0) {
-      delete today[key];
-    }
+async function initSlider() {
+  const dates = await window.dataManager.getDates();
+  const slider = document.getElementById("js_map_slider");
+  slider.max = dates.length - 1;
+  slider.value = dates.length - 1;
+
+  slider.addEventListener("input", (e) => {
+    const daysPrior = dates.length - 1 - parseInt(e.target.value, 10);
+    updateMap(daysPrior);
   });
 }
 
 export default async function initCaseCountMap() {
   const countyOutline = await window.dataManager.getCountyOutline();
 
+  initSlider();
   drawMap(countyOutline);
   updateMap();
 }

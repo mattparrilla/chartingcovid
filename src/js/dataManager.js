@@ -58,16 +58,26 @@ class DataManager {
       }));
   }
 
+  async getDates() {
+    const caseData = await this.cases;
+    return Object.keys(caseData)
+      .sort((firstEl, secondEl) => new Date(secondEl) - new Date(firstEl));
+  }
+
   async getFipsEntry(fips) {
     const fipsData = await this.fips;
     return fipsData[fips];
   }
 
-  async getMostRecentData() {
+
+  async getDaysPriorData(daysPrior) {
+    const sortedDates = await this.getDates();
     const caseData = await this.cases;
-    const sortedDates = Object.keys(caseData)
-    .sort((firstEl, secondEl) => new Date(secondEl) - new Date(firstEl));
-    return caseData[sortedDates[0]];
+    return caseData[sortedDates[daysPrior]];
+  }
+
+  async getMostRecentData() {
+    return this.getDaysPriorData(0);
   }
 
   async getCountyOutline() {
