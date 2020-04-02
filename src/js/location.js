@@ -1,3 +1,4 @@
+import { urlifyName } from './utilities';
 import router from './router';
 
 // Given an array of fips, alphabetically sort the data by key
@@ -53,12 +54,17 @@ export default async function initStateSelector() {
 
   // event listener for state select element
   stateSelector.addEventListener("change", async (e) => {
-    window.locationManager.setAndGoToState(e.target.value);
+    const fips = e.target.value;
+    const state = urlifyName(await window.dataManager.getFipsStateName(fips));
+    router.navigateTo(`/state/${state}`);
   });
 
   // event listener for county select element
-  countySelector.addEventListener("change", (e) => {
-    window.locationManager.setAndGoToCounty(e.target.value);
+  countySelector.addEventListener("change", async (e) => {
+    const fips = e.target.value;
+    const state = urlifyName(await window.dataManager.getFipsStateName(fips));
+    const county = urlifyName(await window.dataManager.getFipsCountyName(fips));
+    router.navigateTo(`/state/${state}/county/${county}`);
   });
 
   document.getElementById("js_home").addEventListener("click", e => {

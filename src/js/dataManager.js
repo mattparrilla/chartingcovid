@@ -29,9 +29,9 @@ class DataManager {
     const fips = await this.fips;
     return Object.keys(fips).find(item => (
       // State in FIPS json is ex: New Jersey
-      urlifyName(fips[item].state) === urlStateName
-      // County in FIPS json is ex: Bergen County
-        && urlifyName(fips[item].county) === urlCountyName
+      urlifyName(fips[item].state) === urlStateName &&
+        // County in FIPS json is ex: Bergen County
+        urlifyName(fips[item].county) === urlCountyName
     ));
   }
 
