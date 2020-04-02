@@ -1,4 +1,5 @@
 import { json } from 'd3';
+import { urlifyName } from './utilities';
 
 class DataManager {
   constructor(fips, cases, countyOutline) {
@@ -15,6 +16,52 @@ class DataManager {
   async getFipsStateName(fips) {
     const fipsData = await this.fips;
     return fipsData[fips].state;
+  }
+
+  async getFipsForStateUrl(urlStateName) {
+    const fips = await this.fips;
+    return Object.keys(fips).find(item => (
+      urlifyName(fips[item].state) === urlStateName
+    ));
+  }
+
+  async getFipsForCountyUrl(urlCountyName, urlStateName) {
+    const fips = await this.fips;
+    return Object.keys(fips).find(item => (
+      // State in FIPS json is ex: New Jersey
+      urlifyName(fips[item].state) === urlStateName
+      // County in FIPS json is ex: Bergen County
+        && urlifyName(fips[item].county) === urlCountyName
+    ));
+  }
+
+  // return list of fips that represent all states
+  async getAllStates() {
+    const fipsData = await this.fips;
+    return Object.keys(fipsData)
+      .filter(fips => fipsData[fips].county === "")
+      .map(fips => ({
+        ...fipsData[fips],
+        fips
+      }));
+  }
+
+  // return list of counties given a state fips
+  async getCountiesGivenState(stateFips) {
+    const fipsData = await this.fips;
+    return Object.keys(fipsData)
+      .filter(fips => (
+        fipsData[fips].county && fipsData[fips].state === fipsData[stateFips].state))
+      .map(fips => ({
+        ...fipsData[fips],
+        fips
+      }));
+  }
+
+
+  async getFipsEntry(fips) {
+    const fipsData = await this.fips;
+    return fipsData[fips];
   }
 }
 

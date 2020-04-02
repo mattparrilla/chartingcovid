@@ -45,7 +45,7 @@ function updateTableMarkup() {
     <tr ${row.highlight ? 'class="highlight"' : ''}>
       <td class="number">${i + 1}</td>
       ${row.county ? placeCell(row.state, row.county) : ""}
-      ${!window.chartingCovid.fips && row.state ? placeCell(row.state) : ""}
+      ${!window.locationManager.getIsCountryView() ? placeCell(row.state) : ""}
       <td class="number">${(row.cases || "").toLocaleString()}</td>
       <td class="number">${(row.cases_per_capita || "").toLocaleString(undefined, {
         minimumFractionDigits: 5

@@ -1,25 +1,21 @@
-import { filterOutCounties, urlifyName } from './utilities';
-import router from './router';
-
-// Given a fips, alphabetically sort the data by key
-function alphabeticalSortByFips(fipsData, key) {
-  return (a, b) => fipsData[a][key] > fipsData[b][key] ? 1 : -1;
+// Given an array of fips, alphabetically sort the data by key
+function alphabeticalSortByFips(key) {
+  return (a, b) => a[key] > b[key] ? 1 : -1;
 }
 
 // Populate the select element with options
-function populateSelector(fipsData, selector, key, selectedFips) {
-  return fips => {
+function populateSelector(selector, key, selectedFips) {
+  return entry => {
     const option = document.createElement("option");
-    option.value = fips;
-    option.text = fipsData[fips][key];
-    option.selected = fips === selectedFips;
+    option.value = entry.fips;
+    option.text = entry[key];
+    option.selected = entry.fips === selectedFips;
     selector.add(option);
   };
 }
 
 
-export async function updateSelectors(data, stateFips, countyFips) {
-  const fipsData = await data.fips;
+export async function updateSelectors(stateFips, countyFips) {
   const stateSelector = document.getElementById("js_select_state");
   const countySelector = document.getElementById("js_select_county");
   countySelector.value = null;
@@ -29,25 +25,25 @@ export async function updateSelectors(data, stateFips, countyFips) {
     stateSelector.value = stateFips;
     countySelector.style.display = "inline-block";
     countySelector.innerHTML = "<option>Choose County</option>";
-    Object.keys(fipsData).filter(fips => (
-      fipsData[fips].county && fipsData[fips].state === fipsData[stateFips].state))
-      .sort(alphabeticalSortByFips(fipsData, "county"))
-      .forEach(populateSelector(fipsData, countySelector, "county", countyFips));
+    const counties = await window.dataManager.getCountiesGivenState(stateFips);
+    counties
+      .sort(alphabeticalSortByFips("county"))
+      .forEach(populateSelector(countySelector, "county", countyFips));
   } else {
     countySelector.style.display = "none";
   }
 }
 
-export default async function initStateSelector(data) {
-  const fipsData = await data.fips;
-  const stateFips = window.locationManager.getStateFips();
+export default async function initStateSelector() {
+  const selectedState = window.locationManager.getStateFips();
   const stateSelector = document.getElementById("js_select_state");
   const countySelector = document.getElementById("js_select_county");
 
   // Populate state select element
-  filterOutCounties(fipsData)
-    .sort(alphabeticalSortByFips(fipsData, "state"))
-    .forEach(populateSelector(fipsData, stateSelector, "state", stateFips));
+  const states = await window.dataManager.getAllStates();
+  states
+    .sort(alphabeticalSortByFips("state"))
+    .forEach(populateSelector(stateSelector, "state", selectedState));
 
   // event listener for state select element
   stateSelector.addEventListener("change", async (e) => {

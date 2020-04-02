@@ -13,7 +13,7 @@ async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
   const dates = sortDateString(casesByDate);
 
   // if no fips, we want whole country
-  if (fips == null) {
+  if (window.locationManager.getIsCountryView()) {
     const states = filterOutCounties(fipsData);
     return dates.map(date => ({
       date,

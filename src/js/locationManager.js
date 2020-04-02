@@ -2,9 +2,9 @@ import { urlifyName } from './utilities';
 import router from './router';
 
 class LocationManager {
-  constructor() {
-    this.countyFips = "";
-    this.stateFips = "";
+  constructor({ county, state }) {
+    this.countyFips = county;
+    this.stateFips = state;
   }
 
   async setCounty(fips) {
@@ -18,7 +18,6 @@ class LocationManager {
   async setState(fips) {
     this.stateFips = fips;
 
-    // Update URL
     const state = urlifyName(await window.dataManager.getFipsStateName(fips));
     router.navigateTo(`/state/${state}`);
   }
@@ -38,8 +37,13 @@ class LocationManager {
   getStateName(fipsData) {
     return fipsData[this.stateFips].state;
   }
+
+  getIsCountryView() {
+    return !(this.getStateFips() || this.getCountyFips());
+  }
 }
 
-export default async function initLocationManager() {
-  window.locationManager = new LocationManager();
+export default function initLocationManager({ county = "", state = "" } = {}) {
+  // if this is our first time calling init, initialize, else use existing object
+  window.locationManager = window.locationManager || new LocationManager({ county, state });
 }
