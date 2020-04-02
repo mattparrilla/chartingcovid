@@ -83,6 +83,24 @@ class DataManager {
   async getCountyOutline() {
     return this.countyOutline;
   }
+
+  async getCasesGivenFips(fips) {
+    const cases = await this.cases;
+    const dates = await this.getDates();
+    return dates.map(date => cases[date][fips]);
+  }
+
+  async getCasesGivenDateFips(date, fips) {
+    const cases = await this.cases;
+    console.log(date, fips);
+    console.log(cases[date][fips]);
+    return (cases[date] && cases[date][fips] && cases[date][fips].cases) || null;
+  }
+
+  async getPopulation(fips) {
+    const fipsData = await this.fips;
+    return fipsData[fips].population;
+  }
 }
 
 export default async function initDataManager() {

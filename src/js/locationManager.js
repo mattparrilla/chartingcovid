@@ -30,6 +30,10 @@ class LocationManager {
     return this.stateFips;
   }
 
+  getLowestLevelFips() {
+    return this.countyFips || this.stateFips;
+  }
+
   getCountyName(fipsData) {
     return fipsData[this.countyFips].county;
   }

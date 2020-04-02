@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import { sortDateString, filterOutCounties } from './utilities';
 
 const margin = { top: 30, right: 90, bottom: 30, left: 20 };
 const height = 500;
@@ -7,34 +6,44 @@ const width = 1000;
 const yRange = [height - margin.bottom, margin.top];
 
 // Munge the chart data we care about
-async function getTrendChartData({ dataPromise, fips, numDays = 30 }) {
-  const fipsData = await dataPromise.fips;
-  const casesByDate = await dataPromise.cases;
-  const dates = sortDateString(casesByDate);
+async function getTrendChartData() {
+  const dates = (await window.dataManager.getDates()).reverse();
+  const numDays = 30;
 
   // if no fips, we want whole country
   if (window.locationManager.getIsCountryView()) {
-    const states = filterOutCounties(fipsData);
-    return dates.map(date => ({
-      date,
-      cases: states.reduce((countryCases, state) => {
-        const stateCases = casesByDate
-          && casesByDate[date][state]
-          && casesByDate[date][state].cases;
-        return countryCases + (stateCases || 0);
-      }, 0)
+    const states = await window.dataManager.getAllStates();
+
+    const countryPopulation = await states.reduce(async (totalPopulation, { fips }) => {
+      const populationSum = await totalPopulation;
+      const statePopulation = await window.dataManager.getPopulation(fips);
+      return populationSum + statePopulation;
+    }, Promise.resolve(0));
+
+    // for each date, sum each states casese
+    return Promise.all(dates.map(async date => {
+      const cases = await states.reduce(async (countryCases, { fips: stateFips }) => {
+        const casesSum = await countryCases;
+        const stateCases = await window.dataManager.getCasesGivenDateFips(date, stateFips);
+        console.log(stateCases);
+        return casesSum + (stateCases || 0);
+      }, Promise.resolve(0));
+      return Promise.resolve({
+        date,
+        cases,
+        casesPerCapita: cases / countryPopulation
+      });
     }));
   }
 
   // Get data by FIPS
-  const trendData = dates.map(date => {
-    const cases = (
-      casesByDate[date] && casesByDate[date][fips] && casesByDate[date][fips].cases
-    ) || 0;
+  const fips = await window.locationManager.getLowestLevelFips();
+  const trendData = dates.map(async date => {
+    const cases = await window.dataManager.getCasesGivenDateFips(date, fips) || 0;
     return {
       date,
       cases,
-      cases_per_capita: cases / fipsData[fips].population,
+      cases_per_capita: cases / window.dataManager.getPopulation(fips)
     };
   });
   return trendData.slice(Math.max(trendData.length - numDays, 1));
@@ -89,8 +98,9 @@ export function updateChart(data) {
     .attr("width", x.bandwidth());
 }
 
-export default async function initTrendChart(dataPromise, fips) {
-  const chartData = await getTrendChartData({ dataPromise, fips });
+export default async function initTrendChart() {
+  const chartData = await getTrendChartData();
+  console.log(chartData);
 
   const x = getChartX(chartData);
   const y = d3.scaleLinear()

@@ -19,7 +19,7 @@ window.addEventListener("DOMContentLoaded", () => {
     // TODO: move table display to table
     tableDisplayToggle.style.display = "block";
     initCaseCountMap();
-    // initTrendChart(data);
+    initTrendChart();
     // initDataTable({ data });
   });
 
