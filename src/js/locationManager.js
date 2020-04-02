@@ -2,12 +2,13 @@ import { urlifyName } from './utilities';
 import router from './router';
 
 class LocationManager {
-  constructor({ county, state }) {
-    this.countyFips = county;
-    this.stateFips = state;
+  constructor() {
+    this.countyFips = "";
+    this.stateFips = "";
   }
 
-  async setCounty(fips) {
+  // Update the county for the page and update URL
+  async setAndGoToCounty(fips) {
     this.countyFips = fips;
 
     const state = urlifyName(await window.dataManager.getFipsStateName(fips));
@@ -15,11 +16,21 @@ class LocationManager {
     router.navigateTo(`/state/${state}/county/${county}`);
   }
 
-  async setState(fips) {
+  // Update the state for the page and update URL
+  async setAndGoToState(fips) {
     this.stateFips = fips;
 
     const state = urlifyName(await window.dataManager.getFipsStateName(fips));
     router.navigateTo(`/state/${state}`);
+  }
+
+  updateFips(state, county) {
+    this.stateFips = state;
+    this.countyFips = county;
+  }
+
+  updateStateFips(state) {
+    this.stateFips = state;
   }
 
   getCountyFips() {
@@ -43,7 +54,6 @@ class LocationManager {
   }
 }
 
-export default function initLocationManager({ county = "", state = "" } = {}) {
-  // if this is our first time calling init, initialize, else use existing object
-  window.locationManager = window.locationManager || new LocationManager({ county, state });
+export default function initLocationManager() {
+  window.locationManager = new LocationManager();
 }

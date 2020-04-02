@@ -47,11 +47,11 @@ export default async function initStateSelector() {
 
   // event listener for state select element
   stateSelector.addEventListener("change", async (e) => {
-    window.locationManager.setState(e.target.value);
+    window.locationManager.setAndGoToState(e.target.value);
   });
 
   // event listener for county select element
   countySelector.addEventListener("change", (e) => {
-    window.locationManager.setCounty(e.target.value);
+    window.locationManager.setAndGoToCounty(e.target.value);
   });
 }

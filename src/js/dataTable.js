@@ -118,7 +118,6 @@ export async function updateTable(showUSCounties = false) {
       tableData = await Promise.all(allCountyFips.map(fipsToTableRows));
     } else { // just show state level data in table
       const states = await window.dataManager.getAllStates();
-      console.log(states);
       tableData = await Promise.all(states.map(fipsToTableRows));
     }
   // Munge data for state or county
