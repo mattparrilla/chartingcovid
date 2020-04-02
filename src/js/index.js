@@ -1,5 +1,5 @@
 import initTrendChart, { updateTrendChart } from './trendChart';
-import initDataTable from './dataTable';
+import initDataTable, { updateTable } from './dataTable';
 import initStateSelector, { updateSelectors } from './location';
 import initCaseCountMap from "./caseCountMap";
 import initDataManager from './dataManager';
@@ -11,20 +11,17 @@ window.addEventListener("DOMContentLoaded", () => {
   initDataManager();
   initCaseCountMap();
   initTrendChart();
+  initDataTable();
 
-  const tableDisplayToggle = document.getElementById("js_table_county_vs_state");
 
   router.add('', () => {
     initLocationManager();
     initStateSelector();
     updateTrendChart();
-    // TODO: move table display to table
-    tableDisplayToggle.style.display = "block";
-    // initDataTable({ data });
+    updateTable();
   });
 
   router.add('state/(:any)', async (state) => {
-    tableDisplayToggle.style.display = "none";
     const fips = await window.dataManager.getFipsForStateUrl(state);
     initLocationManager({ state: fips });
 
@@ -36,11 +33,10 @@ window.addEventListener("DOMContentLoaded", () => {
     initStateSelector();
     updateTrendChart();
     updateSelectors(fips);
-    // initDataTable({ data, state });
+    updateTable();
   });
 
   router.add('state/(:any)/county/(:any)', async (state, county) => {
-    tableDisplayToggle.style.display = "none";
     const countyFips = await window.dataManager.getFipsForCountyUrl(county, state);
     const stateFips = await window.dataManager.getFipsForStateUrl(state);
     initLocationManager({ state: stateFips, county: countyFips });
@@ -53,7 +49,7 @@ window.addEventListener("DOMContentLoaded", () => {
     initStateSelector();
     updateTrendChart();
     updateSelectors(stateFips, countyFips);
-    // initDataTable({ data, state, countyFips });
+    updateTable();
   });
 
   router.addUriListener();

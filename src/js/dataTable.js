@@ -1,4 +1,4 @@
-import { filterOutCounties, sortDateString, urlifyName } from './utilities';
+import { urlifyName } from './utilities';
 
 // Used to store our table data for sorting, etc
 let tableData;
@@ -39,13 +39,12 @@ function placeCell(state, county) {
 function updateTableMarkup() {
   const truncatedData = tableData.length > 500 ? tableData.slice(0, 100) : tableData;
 
-
   const tbody = document.getElementById("js_tbody");
   tbody.innerHTML = truncatedData.map((row, i) => `
     <tr ${row.highlight ? 'class="highlight"' : ''}>
       <td class="number">${i + 1}</td>
       ${row.county ? placeCell(row.state, row.county) : ""}
-      ${!window.locationManager.getIsCountryView() ? placeCell(row.state) : ""}
+      ${window.locationManager.isCountryView() ? placeCell(row.state) : ""}
       <td class="number">${(row.cases || "").toLocaleString()}</td>
       <td class="number">${(row.cases_per_capita || "").toLocaleString(undefined, {
         minimumFractionDigits: 5
@@ -57,7 +56,7 @@ function updateTableMarkup() {
     </tr>`).join('');
 }
 
-function sortTable(sortColumn, descendingSort) {
+function sortTable(sortColumn = "cases", descendingSort = true) {
   // sort rows in place
   tableData.sort(sortRowsByColumn(sortColumn));
 
@@ -69,81 +68,71 @@ function sortTable(sortColumn, descendingSort) {
   updateTableMarkup();
 }
 
-// Put data in table and sort. Order: State, Cases, Cases Per Capita, Growth Rate
-async function updateTable({
-  data,
-  state,
-  countyFips,
-  sortColumn = "cases",
-  descendingSort = true,
-  showAllCounties = false
-}) {
-  const casesByDate = await data.cases;
-  const fipsData = await data.fips;
-  const dates = sortDateString(casesByDate);
-  const today = casesByDate[dates[dates.length - 1]];
+async function fipsToTableRows({ state, county, population, fips }) {
+  const today = await window.dataManager.getMostRecentData();
+  const countyFips = window.locationManager.getCountyFips();
 
-
-  function fipsToTableRows(fips) {
-    // if we have cases reported today
-    if (today[fips]) {
-      return {
-        highlight: countyFips === fips,
-        county: fipsData[fips].county,
-        state: fipsData[fips].state,
-        ...today[fips],
-        cases_per_capita: today[fips].cases / fipsData[fips].population
-      };
-    }
-    // no cases reported for given gips
-    return {
+  // if we have cases reported today
+  if (today[fips]) {
+    return Promise.resolve({
+      county,
+      state,
       highlight: countyFips === fips,
-      county: fipsData[fips].county,
-      state: fipsData[fips].state,
-      cases: null,
-      cases_per_capita: null,
-      moving_avg: null
-    };
+      ...today[fips],
+      cases_per_capita: today[fips].cases / population
+    });
   }
+  // no cases reported for given gips
+  return Promise.resolve({
+    county,
+    state,
+    highlight: countyFips === fips,
+    cases: null,
+    cases_per_capita: null,
+    moving_avg: null
+  });
+}
 
-  document.getElementById("js_county_disclaimer").style.display = showAllCounties
+// Put data in table and sort. Order: State, Cases, Cases Per Capita, Growth Rate
+export async function updateTable(showUSCounties = false) {
+  const isCountryView = window.locationManager.isCountryView();
+
+  // Add disclaimer if we are in country view and showing all US counties
+  document.getElementById("js_county_disclaimer").style.display = showUSCounties && isCountryView
     ? "block"
     : "none";
 
-  // if state is null, we are looking at US.
-  if (state == null) {
-    if (showAllCounties) {
-      const allCountyFips = Object.keys(fipsData).filter(item => (
-        fipsData[item].county !== "" // if county string is empty then we have a state
-      ));
-      tableData = allCountyFips.map(fipsToTableRows);
-    } else { // just show state level data in table
-      const states = filterOutCounties(fipsData);
+  document.getElementById("js_table_county_vs_state").style.display = isCountryView ? "block" : "none";
 
-      tableData = states.map(fipsToTableRows);
+  // Only hide county column header if we are looking at county level data but
+  // not all US counties
+  document.getElementById("county_header").style.display =
+    !showUSCounties && window.locationManager.isCountryView() ? "none" : "table-cell";
+
+  // Only show state if we are looking at whole country
+  document.getElementById("state_header").style.display = isCountryView ? "table-cell" : "none";
+
+  if (isCountryView) {
+    if (showUSCounties) {
+      const allCountyFips = await window.dataManager.getAllCounties();
+      tableData = await Promise.all(allCountyFips.map(fipsToTableRows));
+    } else { // just show state level data in table
+      const states = await window.dataManager.getAllStates();
+      console.log(states);
+      tableData = await Promise.all(states.map(fipsToTableRows));
     }
   // Munge data for state or county
   } else {
-    const dataByState = Object.keys(fipsData).filter(item => (
-      // filter today's data to give us just counties within current state
-      // regardless of if we have a county selected
-      fipsData[item].state.replace(/\s/g, '-').toLowerCase() === state
-      // filter out the top level state data (county is empty string)
-      && fipsData[item].county));
-
-    tableData = dataByState.map(fipsToTableRows);
+    const stateFips = window.locationManager.getStateFips();
+    const dataByState = await window.dataManager.getCountiesGivenState(stateFips);
+    tableData = await Promise.all(dataByState.map(fipsToTableRows));
   }
-  // Only show county column header if we are looking at county level data
-  document.getElementById("county_header").style.display = tableData[0].county ? "table-cell" : "none";
 
-  // Only show state if we are looking at whole country
-  document.getElementById("state_header").style.display = state ? "none" : "table-cell";
-
-  sortTable(sortColumn, descendingSort, showAllCounties);
+  sortTable();
 }
 
 
-export default function initDataTable({ data, state, countyFips }) {
+export default function initDataTable() {
   // Add handlers to sort on column header click
   const tableHeaders = document.querySelectorAll("#js_thead th");
   tableHeaders.forEach(th => {
@@ -167,10 +156,7 @@ export default function initDataTable({ data, state, countyFips }) {
     option.addEventListener("click", () => {
       tableRowOptions.forEach(item => item.classList.remove("active"));
       option.classList.add("active");
-      updateTable({ data, state, countyFips, showAllCounties: option.dataset.type === "county" });
+      updateTable(option.dataset.type === "county");
     });
   });
-
-  // init our table
-  updateTable({ data, state, countyFips });
 }

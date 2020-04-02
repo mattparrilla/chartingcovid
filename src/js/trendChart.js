@@ -12,7 +12,7 @@ async function getTrendChartData() {
   const sliceAt = Math.max(dates.length - numDays, 1);
 
   // if no fips, we want whole country
-  if (window.locationManager.getIsCountryView()) {
+  if (window.locationManager.isCountryView()) {
     const states = await window.dataManager.getAllStates();
 
     const countryPopulation = await states.reduce(async (totalPopulation, { fips }) => {

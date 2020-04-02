@@ -46,6 +46,17 @@ class DataManager {
       }));
   }
 
+  // return list of fips that represent all states
+  async getAllCounties() {
+    const fipsData = await this.fips;
+    return Object.keys(fipsData)
+      .filter(fips => fipsData[fips].county !== "")
+      .map(fips => ({
+        ...fipsData[fips],
+        fips
+      }));
+  }
+
   // return list of counties given a state fips
   async getCountiesGivenState(stateFips) {
     const fipsData = await this.fips;

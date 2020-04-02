@@ -38,7 +38,7 @@ class LocationManager {
     return fipsData[this.stateFips].state;
   }
 
-  getIsCountryView() {
+  isCountryView() {
     return !(this.getStateFips() || this.getCountyFips());
   }
 }
