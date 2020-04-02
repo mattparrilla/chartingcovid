@@ -1,7 +1,19 @@
 import { urlifyName } from './utilities';
+import router from './router';
 
 // Used to store our table data for sorting, etc
 let tableData;
+
+// Handle link click in table, redirect and scroll to top
+function handleTableLinkClick() {
+  document.querySelectorAll("#js_tbody a").forEach(link => {
+    link.addEventListener("click", e => {
+      e.preventDefault();
+      window.scrollTo({ top: 0 });
+      router.navigateTo(e.target.dataset.href);
+    });
+  });
+}
 
 function sortRowsByColumn(sortColumn) {
   const intColumns = ["cases"];
@@ -30,9 +42,11 @@ function placeCell(state, county) {
   const stateUrl = urlifyName(state);
   if (county) {
     const countyUrl = urlifyName(county);
-    return `<td><a href="/state/${stateUrl}/county/${countyUrl}">${county}</td>`;
+    const href = `/state/${stateUrl}/county/${countyUrl}`;
+    return `<td><a data-href="${href}" href="${href}">${county}</td>`;
   }
-  return `<td><a href="/state/${stateUrl}">${state}</td>`;
+  const href = `/state/${stateUrl}`;
+  return `<td><a data-href="${href}" href="${href}">${state}</td>`;
 }
 
 // Truncate results if over 500 and update markup on page
@@ -128,6 +142,7 @@ export async function updateTable(showUSCounties = false) {
   }
 
   sortTable();
+  handleTableLinkClick();
 }
 
 

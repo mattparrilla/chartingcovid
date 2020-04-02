@@ -16,41 +16,42 @@ window.addEventListener("DOMContentLoaded", () => {
   initDataTable();
 
 
-  router.add('', () => {
-    window.locationManager.updateFips();
-    updateTrendChart();
-    updateTable();
-  });
+  router
+    .add('', () => {
+      window.locationManager.updateFips();
+      updateSelectors();
+      updateTrendChart();
+      updateTable();
+    })
 
-  router.add('state/(:any)', async (state) => {
-    const fips = await window.dataManager.getFipsForStateUrl(state);
-    window.locationManager.updateFips(fips);
+    .add('state/(:any)', async (state) => {
+      const fips = await window.dataManager.getFipsForStateUrl(state);
+      window.locationManager.updateFips(fips);
 
-    console.log(`State: ${state}; FIPS: ${fips}`);
-    if (!fips) {
-      window.alert(`fips for: ${state} not found`);
-    }
+      console.log(`State: ${state}; FIPS: ${fips}`);
+      if (!fips) {
+        window.alert(`fips for: ${state} not found`);
+      }
 
-    updateSelectors(fips);
-    updateTrendChart();
-    updateTable();
-  });
+      updateSelectors();
+      updateTrendChart();
+      updateTable();
+    })
 
-  router.add('state/(:any)/county/(:any)', async (state, county) => {
-    const countyFips = await window.dataManager.getFipsForCountyUrl(county, state);
-    const stateFips = await window.dataManager.getFipsForStateUrl(state);
-    window.locationManager.updateFips(stateFips, countyFips);
+    .add('state/(:any)/county/(:any)', async (state, county) => {
+      const countyFips = await window.dataManager.getFipsForCountyUrl(county, state);
+      const stateFips = await window.dataManager.getFipsForStateUrl(state);
+      window.locationManager.updateFips(stateFips, countyFips);
 
-    console.log(`State: ${state}; County: ${county}; FIPS: ${countyFips}`);
-    if (!countyFips) {
-      window.alert(`fips for: ${county}, ${state} not found`);
-    }
+      console.log(`State: ${state}; County: ${county}; FIPS: ${countyFips}`);
+      if (!countyFips) {
+        window.alert(`fips for: ${county}, ${state} not found`);
+      }
 
-    updateSelectors(stateFips, countyFips);
-    updateTrendChart();
-    updateTable();
-  });
-
-  router.addUriListener();
-  router.navigateTo(window.location.pathname);
+      updateSelectors();
+      updateTrendChart();
+      updateTable();
+    })
+    .addUriListener()
+    .navigateTo(window.location.pathname);
 });

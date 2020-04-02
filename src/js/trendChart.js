@@ -39,7 +39,6 @@ async function getTrendChartData() {
   // Get data by FIPS
   const fips = await window.locationManager.getCountyFips()
     || await window.locationManager.getStateFips();
-  console.log(fips);
   return Promise.all(dates.map(async date => {
     const cases = await window.dataManager.getCasesGivenDateFips(date, fips) || 0;
     const population = await window.dataManager.getPopulation(fips);

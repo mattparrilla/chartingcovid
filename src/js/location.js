@@ -1,3 +1,5 @@
+import router from './router';
+
 // Given an array of fips, alphabetically sort the data by key
 function alphabeticalSortByFips(key) {
   return (a, b) => a[key] > b[key] ? 1 : -1;
@@ -15,10 +17,12 @@ function populateSelector(selector, key, selectedFips) {
 }
 
 
-export async function updateSelectors(stateFips, countyFips) {
+export async function updateSelectors() {
+  const stateFips = window.locationManager.getStateFips();
+  const countyFips = window.locationManager.getCountyFips();
   const stateSelector = document.getElementById("js_select_state");
   const countySelector = document.getElementById("js_select_county");
-  countySelector.value = null;
+  countySelector.value = "";
 
   // if we have a state selected, clear existing county options and populate
   if (stateFips) {
@@ -30,6 +34,8 @@ export async function updateSelectors(stateFips, countyFips) {
       .sort(alphabeticalSortByFips("county"))
       .forEach(populateSelector(countySelector, "county", countyFips));
   } else {
+    stateSelector.value = "";
+    countySelector.value = "";
     countySelector.style.display = "none";
   }
 }
@@ -53,5 +59,11 @@ export default async function initStateSelector() {
   // event listener for county select element
   countySelector.addEventListener("change", (e) => {
     window.locationManager.setAndGoToCounty(e.target.value);
+  });
+
+  document.getElementById("js_home").addEventListener("click", e => {
+    e.preventDefault();
+    window.scrollTo({ top: 0 });
+    router.navigateTo("");
   });
 }
