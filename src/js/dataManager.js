@@ -92,8 +92,6 @@ class DataManager {
 
   async getCasesGivenDateFips(date, fips) {
     const cases = await this.cases;
-    console.log(date, fips);
-    console.log(cases[date][fips]);
     return (cases[date] && cases[date][fips] && cases[date][fips].cases) || null;
   }
 

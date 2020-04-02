@@ -1,4 +1,4 @@
-import initTrendChart from './trendChart';
+import initTrendChart, { updateTrendChart } from './trendChart';
 import initDataTable from './dataTable';
 import initStateSelector, { updateSelectors } from './location';
 import initCaseCountMap from "./caseCountMap";
@@ -8,18 +8,18 @@ import router from './router';
 
 // TODO: handle 404s (replace alerts)
 window.addEventListener("DOMContentLoaded", () => {
-  // kick off data calls
   initDataManager();
+  initCaseCountMap();
+  initTrendChart();
 
   const tableDisplayToggle = document.getElementById("js_table_county_vs_state");
 
   router.add('', () => {
     initLocationManager();
     initStateSelector();
+    updateTrendChart();
     // TODO: move table display to table
     tableDisplayToggle.style.display = "block";
-    initCaseCountMap();
-    initTrendChart();
     // initDataTable({ data });
   });
 
@@ -34,8 +34,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     initStateSelector();
+    updateTrendChart();
     updateSelectors(fips);
-    // initTrendChart(data, fips);
     // initDataTable({ data, state });
   });
 
@@ -51,8 +51,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     initStateSelector();
+    updateTrendChart();
     updateSelectors(stateFips, countyFips);
-    // initTrendChart(data, countyFips);
     // initDataTable({ data, state, countyFips });
   });
 

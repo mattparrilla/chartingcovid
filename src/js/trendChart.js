@@ -9,6 +9,7 @@ const yRange = [height - margin.bottom, margin.top];
 async function getTrendChartData() {
   const dates = (await window.dataManager.getDates()).reverse();
   const numDays = 30;
+  const sliceAt = Math.max(dates.length - numDays, 1);
 
   // if no fips, we want whole country
   if (window.locationManager.getIsCountryView()) {
@@ -25,7 +26,6 @@ async function getTrendChartData() {
       const cases = await states.reduce(async (countryCases, { fips: stateFips }) => {
         const casesSum = await countryCases;
         const stateCases = await window.dataManager.getCasesGivenDateFips(date, stateFips);
-        console.log(stateCases);
         return casesSum + (stateCases || 0);
       }, Promise.resolve(0));
       return Promise.resolve({
@@ -33,20 +33,21 @@ async function getTrendChartData() {
         cases,
         casesPerCapita: cases / countryPopulation
       });
-    }));
+    }).slice(sliceAt));
   }
 
   // Get data by FIPS
-  const fips = await window.locationManager.getLowestLevelFips();
-  const trendData = dates.map(async date => {
+  const fips = await window.locationManager.getCountyFips()
+    || await window.locationManager.getStateFips();
+  return Promise.all(dates.map(async date => {
     const cases = await window.dataManager.getCasesGivenDateFips(date, fips) || 0;
-    return {
+    const population = await window.dataManager.getPopulation(fips);
+    return Promise.resolve({
       date,
       cases,
-      cases_per_capita: cases / window.dataManager.getPopulation(fips)
-    };
-  });
-  return trendData.slice(Math.max(trendData.length - numDays, 1));
+      cases_per_capita: cases / population
+    });
+  }).slice(sliceAt));
 }
 
 // given our chart's data generate an X scale
@@ -57,7 +58,8 @@ function getChartX(data) {
     .padding(0.1);
 }
 
-export function updateChart(data) {
+export async function updateTrendChart() {
+  const data = await getTrendChartData();
   const svg = d3.select("#js_trend_chart svg");
   const { metric, scale } = document
     .querySelectorAll("#js_chart_metric_selector .active")[0].dataset;
@@ -100,7 +102,6 @@ export function updateChart(data) {
 
 export default async function initTrendChart() {
   const chartData = await getTrendChartData();
-  console.log(chartData);
 
   const x = getChartX(chartData);
   const y = d3.scaleLinear()
@@ -164,7 +165,7 @@ export default async function initTrendChart() {
       metric.classList.add("active");
 
       document.getElementById("js_chart_metric").innerHTML = chartTitleMap[metric.dataset.metric];
-      updateChart(chartData);
+      updateTrendChart();
     });
   });
 }
