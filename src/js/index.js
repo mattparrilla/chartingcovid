@@ -1,21 +1,14 @@
-import { json } from 'd3';
 import initTrendChart from './trendChart';
 import initDataTable from './dataTable';
 import initStateSelector, { updateSelectors } from './location';
 import initCaseCountMap from "./caseCountMap";
-import router from './router';
 import initDataManager from './dataManager';
 import initLocationManager from './locationManager';
+import router from './router';
 
 // TODO: handle 404s (replace alerts)
 window.addEventListener("DOMContentLoaded", () => {
   // kick off data calls
-  const data = {
-    fips: json("/data/fips_data.json"),
-    cases: json("/data/covid_cases_by_date.json"),
-    countyOutline: json("/data/counties-albers-10m2.json")
-  };
-
   initDataManager();
 
   const tableDisplayToggle = document.getElementById("js_table_county_vs_state");
@@ -25,9 +18,9 @@ window.addEventListener("DOMContentLoaded", () => {
     initStateSelector();
     // TODO: move table display to table
     tableDisplayToggle.style.display = "block";
-    initCaseCountMap(data);
-    initTrendChart(data);
-    initDataTable({ data });
+    initCaseCountMap();
+    // initTrendChart(data);
+    // initDataTable({ data });
   });
 
   router.add('state/(:any)', async (state) => {
@@ -42,8 +35,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     initStateSelector();
     updateSelectors(fips);
-    initTrendChart(data, fips);
-    initDataTable({ data, state });
+    // initTrendChart(data, fips);
+    // initDataTable({ data, state });
   });
 
   router.add('state/(:any)/county/(:any)', async (state, county) => {
@@ -59,8 +52,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     initStateSelector();
     updateSelectors(stateFips, countyFips);
-    initTrendChart(data, countyFips);
-    initDataTable({ data, state, countyFips });
+    // initTrendChart(data, countyFips);
+    // initDataTable({ data, state, countyFips });
   });
 
   router.addUriListener();

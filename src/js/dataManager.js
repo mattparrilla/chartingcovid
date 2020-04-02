@@ -58,10 +58,20 @@ class DataManager {
       }));
   }
 
-
   async getFipsEntry(fips) {
     const fipsData = await this.fips;
     return fipsData[fips];
+  }
+
+  async getMostRecentData() {
+    const caseData = await this.cases;
+    const sortedDates = Object.keys(caseData)
+    .sort((firstEl, secondEl) => new Date(secondEl) - new Date(firstEl));
+    return caseData[sortedDates[0]];
+  }
+
+  async getCountyOutline() {
+    return this.countyOutline;
   }
 }
 
