@@ -28,10 +28,6 @@ class LocationManager {
   isCountryView() {
     return !(this.getStateFips() || this.getCountyFips());
   }
-
-  isNewState() {
-    return this.stateFips !== this.lastState;
-  }
 }
 
 export default function initLocationManager() {

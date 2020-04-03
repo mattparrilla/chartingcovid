@@ -1,9 +1,9 @@
 import * as d3 from "d3";
 
 // set the dimensions and margins of the graph
-const margin = { top: 20, right: 50, bottom: 30, left: 70 };
+const margin = { top: 20, right: 50, bottom: 80, left: 70 };
 const width = 1000 - margin.left - margin.right;
-const height = 500 - margin.top - margin.bottom;
+const height = 550 - margin.top - margin.bottom;
 const x = d3.scaleLinear().range([margin.left, width]);
 const y = d3.scaleSymlog().range([height - margin.bottom, margin.top]);
 const svg = d3.select("#js_days_since_chart")
@@ -36,9 +36,9 @@ function generateHighlights(data) {
     b.maxNewCases > a.maxNewCases ? 1 : -1
   ));
 
+  const categories = [highestPeak, longestDuration, fastestRisers];
   let i = 0;
   let highlights = [];
-  const categories = [highestPeak, longestDuration, fastestRisers];
   while (highlights.length < 5) {
     categories.forEach(category => {
       const fips = category[i].fips;
@@ -49,14 +49,17 @@ function generateHighlights(data) {
     i++;
   }
 
+  // if we have a selected county and if that county has met threshold, include
+  // in highlights
+  const county = window.locationManager.getCountyFips();
+  if (county && county in data && !highlights.includes(county)) {
+    highlights.push(county);
+  }
+
   return highlights;
 }
 
 export async function updateLineChart() {
-  // if state hasn't changed, don't update this chart
-  if (!window.locationManager.isNewState()) {
-    return;
-  }
   const data = window.locationManager.isCountryView() ?
     await window.dataManager.getNewCasesAllStates() :
     await window.dataManager.getNewCasesGivenState(window.locationManager.getStateFips());
@@ -174,4 +177,10 @@ export default async function initLineChart() {
     .call(d3.axisLeft(y)
         .tickValues(ticks.filter(tick => tick < yMax))
         .tickFormat(i => displayTicks.includes(i) ? i.toLocaleString() : ""));
+
+  // x axis label
+  svg.append("text")
+    .attr("transform", `translate(${(width / 2)}, ${height - 20})`)
+    .style("text-anchor", "middle")
+    .text("Days Since 50 Confirmed Cases");
 }
