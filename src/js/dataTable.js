@@ -15,23 +15,24 @@ function handleTableLinkClick() {
   });
 }
 
-function sortRowsByColumn(sortColumn) {
+function sortRowsByColumn(sortColumn, descendingSort) {
   const intColumns = ["cases"];
-  const floatColumns = ["cases_per_capita", "moving_avg"];
+  const floatColumns = ["growth_factor", "doubling_time", "cases_per_capita"];
+  const descending = descendingSort ? 1 : -1;
 
   return function sortRows(a, b) {
     // Always push null to the bottom
-    if (a[sortColumn] == null || b[sortColumn] == null) {
-      return 1;
+    if (b[sortColumn] == null) {
+      return -1;
     }
     if (intColumns.includes(sortColumn)) {
-      return parseInt(b[sortColumn], 10) - parseInt(a[sortColumn], 10);
+      return descending * (parseInt(b[sortColumn], 10) - parseInt(a[sortColumn], 10));
     }
 
     if (floatColumns.includes(sortColumn)) {
-      return parseFloat(b[sortColumn]) - parseFloat(a[sortColumn]);
+      return descending * (parseFloat(b[sortColumn]) - parseFloat(a[sortColumn]));
     }
-    return a[sortColumn] < b[sortColumn] ? 1 : -1;
+    return a[sortColumn] < b[sortColumn] ? descending : -descending;
   };
 }
 
@@ -72,13 +73,7 @@ function updateTableMarkup() {
 
 function sortTable(sortColumn = "cases", descendingSort = true) {
   // sort rows in place
-  tableData.sort(sortRowsByColumn(sortColumn));
-
-  // TODO: to improve performance, could do this in sortRowsByColumn
-  if (!descendingSort) {
-    tableData.reverse();
-  }
-
+  tableData.sort(sortRowsByColumn(sortColumn, descendingSort));
   updateTableMarkup();
 }
 
@@ -93,7 +88,7 @@ async function fipsToTableRows({ state, county, population, fips }) {
       state,
       highlight: countyFips === fips,
       ...today[fips],
-      cases_per_capita: today[fips].cases / population
+      cases_per_capita: today[fips].cases ? today[fips].cases / population : null
     });
   }
   // no cases reported for given gips
