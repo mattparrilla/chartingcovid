@@ -106,6 +106,45 @@ def get_averaged_doubling_time(preceding_case_counts: list) -> float:
     return mean([get_doubling_time(r) for r in growth_rates])
 
 
+def get_daily_increases(preceding_case_counts: list) -> list:
+    """
+    # Find the absolute count of new daily cases for the previous
+    # len(preceding_case_counts).
+    #
+    # If a day has the same count as the previous, we try to estimate a "most
+    # likely" value for that date, given its surrounding case counts. The
+    # details are explained below.
+    """
+    increases = []
+    for i in range(len(preceding_case_counts) - 1):
+        increase = \
+            preceding_case_counts[i] - preceding_case_counts[i + 1]
+        # Cases that have 0 increase introduce a division by 0 error
+        # when we calculate our moving average. Many of these cases
+        # will be days where there was a lack of reporting. We attempt
+        # to extrapolate a "most likely" value for these no-change
+        # days. We do this by calculating the exponential growth rate
+        # between the previous and following day case counts and using
+        # that rate to estimate a new value for the day.
+        if i != 0 and increase == 0:
+            next_count = preceding_case_counts[i - 1]
+            previous_count = preceding_case_counts[i + 1]
+            if next_count - previous_count == 0:
+                # If there are 3 case counts in a row that are equal, we
+                # decline to upwardly estimate case counts.
+                break
+            exp_growth_rate = get_exp_growth_rate(
+                next_count, previous_count, num_periods=2)
+            # To get the new count, we grow the previous day's count
+            # by the exp growth rate we found above.
+            # New Total = e**Rate * Starting
+            new_count = \
+                math.e**exp_growth_rate * previous_count
+            increase = new_count - previous_count
+        increases.append(increase)
+    return increases
+
+
 def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
     """
     Calculate the moving average growth factor.
@@ -123,41 +162,11 @@ def get_growth_factor(preceding_case_counts: list) -> Optional[float]:
     growth factors of 1.5 (30/20), 2 (20/10), 1 (10/10)
     We average the daily growth rates and record a 1.5 growth factor
     """
-    # Find the absolute count of new daily cases for the previous
-    # len(preceding_case_counts), which is growth_metric_days, days.
-    increases = []
-    can_calculate_growth_factor = True
-    for i in range(len(preceding_case_counts) - 1):
-        increase = \
-            preceding_case_counts[i] - preceding_case_counts[i + 1]
-        # Cases that have 0 increase introduce a division by 0 error
-        # when we calculate our moving average. Many of these cases
-        # will be days where there was a lack of reporting. We attempt
-        # to extrapolate a "most likely" value for these no-change
-        # days. We do this by calculating the exponential growth rate
-        # between the previous and following day case counts and using
-        # that rate to estimate a new value for the day.
-        if i != 0 and increase == 0:
-            next_count = preceding_case_counts[i - 1]
-            previous_count = preceding_case_counts[i + 1]
-            if next_count - previous_count == 0:
-                # If there are 3 case counts in a row that are equal,
-                # we decline to record a growth factor.
-                can_calculate_growth_factor = False
-                break
-            exp_growth_rate = get_exp_growth_rate(
-                next_count, previous_count, num_periods=2)
-            # To get the new count, we grow the previous day's count
-            # by the exp growth rate we found above.
-            # New Total = e**Rate * Starting
-            new_count = \
-                math.e**exp_growth_rate * previous_count
-            increase = new_count - previous_count
-        increases.append(increase)
+    increases = get_daily_increases(preceding_case_counts)
 
     # Find the growth in daily new cases for the previous growth_metric_days
     # days, if possible.
-    if can_calculate_growth_factor:
+    if all(increases):
         growth_in_daily_new_cases = []
         for i in range(len(increases) - 1):
             growth_in_daily_new_cases.append(
@@ -227,10 +236,8 @@ def record_growth_metrics(output_data: dict,
 
 
 def record_case_counts(csv_data: list, output_data: dict,
-        inverse_chronological_case_data: dict,
-        output_fips_first: bool, growth_metric_days: int,
-        is_state_file: bool, latest_date: datetime.date,
-        total_days_of_data: int) -> (dict, dict):
+        inverse_chronological_case_data: dict, output_fips_first: bool,
+        is_state_file: bool, latest_date: datetime.date) -> (dict, dict):
     """
     Returns a tuple of case count data and inverse chronological case data.
 
@@ -364,8 +371,7 @@ def generate_covid_data(filename: str, output_data: dict,
 
         output_data, inverse_chronological_case_data = record_case_counts(
                 csv_list, output_data, inverse_chronological_case_data,
-                output_fips_first, growth_metric_days, is_state_file,
-                latest_date, total_days_of_data)
+                output_fips_first, is_state_file, latest_date)
 
         output_data = record_growth_metrics(output_data,
                 inverse_chronological_case_data, output_fips_first,
