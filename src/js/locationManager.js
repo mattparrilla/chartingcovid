@@ -2,14 +2,17 @@ class LocationManager {
   constructor() {
     this.countyFips = "";
     this.stateFips = "";
+    this.lastState = "";
   }
 
   updateFips(state, county) {
+    this.lastState = this.stateFips;
     this.stateFips = state;
     this.countyFips = county;
   }
 
   updateStateFips(state) {
+    this.lastState = this.stateFips;
     this.stateFips = state;
     this.countyFips = null;
   }

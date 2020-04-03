@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-const margin = { top: 30, right: 90, bottom: 30, left: 20 };
+export const margin = { top: 60, right: 90, bottom: 80, left: 90 };
 const height = 500;
 const width = 1000;
 const yRange = [height - margin.bottom, margin.top];
@@ -62,7 +62,7 @@ export async function updateTrendChart() {
   const data = await getTrendChartData();
   const svg = d3.select("#js_trend_chart svg");
   const { metric, scale } = document
-    .querySelectorAll("#js_chart_metric_selector .active")[0].dataset;
+    .querySelectorAll("#js_chart_scale_selector .active")[0].dataset;
 
   const x = getChartX(data);
   const yMax = d3.max(data, d => d[metric]);
@@ -152,13 +152,12 @@ export default async function initTrendChart() {
   };
 
   // Update chart scale on selection
-  const metrics = document.querySelectorAll("#js_chart_metric_selector span");
+  const metrics = document.querySelectorAll("#js_chart_scale_selector span");
   metrics.forEach(metric => {
     metric.addEventListener("click", () => {
       metrics.forEach(el => el.classList.remove("active"));
       metric.classList.add("active");
 
-      document.getElementById("js_chart_metric").innerHTML = chartTitleMap[metric.dataset.metric];
       updateTrendChart();
     });
   });

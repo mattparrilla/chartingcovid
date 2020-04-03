@@ -2,6 +2,10 @@
 
 #js_days_since_chart {
   margin-bottom: 5rem;
+
+  svg {
+    border: 1px solid palette.$neutral_7;
+  }
 }
 
 .line {
@@ -9,15 +13,15 @@
   stroke: palette.$neutral_6;
   stroke-width: 2px;
 
-  &.highlight {
-    stroke: palette.$neutral_1;
+  &.hover {
+    stroke: palette.$neutral_1 !important;
   }
 }
 
-.circle {
-  fill: palette.$neutral_6;
-  stroke: palette.$neutral_9;
-  &.highlight {
-    fill: palette.$neutral_1;
-  }
+.circle.hover {
+  fill: palette.$neutral_1 !important;
+}
+
+.legend_key {
+  font-size: 1.4rem;
 }

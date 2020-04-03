@@ -7,6 +7,19 @@ import initLocationManager from './locationManager';
 import initLineChart, { updateLineChart } from './lineChart';
 import router from './router';
 
+async function updateLabels(fips) {
+  const fipsLabels = await window.dataManager.getFullName(fips);
+  let label = "the United States";
+  if (fipsLabels.county) {
+    label = `${fipsLabels.county}, ${fipsLabels.state}`;
+  } else if (fipsLabels.state) {
+    label = fipsLabels.state;
+  }
+  document.querySelectorAll(".js_location_name").forEach(span => {
+    span.innerHTML = label;
+  });
+}
+
 // TODO: handle 404s (replace alerts)
 window.addEventListener("DOMContentLoaded", () => {
   initDataManager();
@@ -17,10 +30,10 @@ window.addEventListener("DOMContentLoaded", () => {
   initDataTable();
   initLineChart();
 
-
   router
     .add('', () => {
       window.locationManager.updateFips();
+      updateLabels();
       updateSelectors();
       updateMapZoom();
       updateLineChart();
@@ -31,12 +44,7 @@ window.addEventListener("DOMContentLoaded", () => {
     .add('state/(:any)', async (state) => {
       const fips = await window.dataManager.getFipsForStateUrl(state);
       window.locationManager.updateFips(fips);
-
-      console.log(`State: ${state}; FIPS: ${fips}`);
-      if (!fips) {
-        window.alert(`fips for: ${state} not found`);
-      }
-
+      updateLabels(window.locationManager.getStateFips());
       updateSelectors();
       updateMapZoom();
       updateLineChart();
@@ -48,12 +56,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const countyFips = await window.dataManager.getFipsForCountyUrl(county, state);
       const stateFips = await window.dataManager.getFipsForStateUrl(state);
       window.locationManager.updateFips(stateFips, countyFips);
-
-      console.log(`State: ${state}; County: ${county}; FIPS: ${countyFips}`);
-      if (!countyFips) {
-        window.alert(`fips for: ${county}, ${state} not found`);
-      }
-
+      updateLabels(window.locationManager.getCountyFips());
       updateSelectors();
       updateMapZoom();
       updateLineChart();
