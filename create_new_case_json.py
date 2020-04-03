@@ -1,3 +1,26 @@
+"""
+Script to generate JSON data regarding new confirmed covid cases.
+
+The output JSON will be in the format of:
+
+    {
+        FIPS: [X, Y, Z,...],
+        ...
+    }
+
+Where X is the number of new cases in the most recent day, Y is the number of
+new cases the preceding day, etc. The list will only contain counts after the
+TOTAL count of cases for that FIPS location has reached at least
+minimum_case_count (default of 50).
+
+Args:
+
+    --county_input: The file path to NYT county covid case data csv.
+    --state_input: The file path to NYT state covid case data csv.
+    --output_file: The path to file to output JSON to.
+    --minimum_case_count: The number of cases a FIPS location must reach before
+      we begin to output new case data.
+"""
 import argparse
 from collections import defaultdict
 import csv
@@ -34,8 +57,9 @@ def generate_new_case_data(filename: str, minimum_case_count: int,
             defaultdict(lambda: [None]*total_days_of_data)
 
         # For the purposes of this script we don't care about the output
-        # of the first return value, which is a dictionary of call case count
-        # data. We only want the chronological list of cases for each place.
+        # of the first return value, which is a dictionary of all case count
+        # data. We only want the chronological list of cases for each place
+        # that is output 2nd.
         _, inverse_chronological_case_data = record_case_counts(
                 csv_list, defaultdict(dict), inverse_chronological_case_data,
                 False, is_state_file, latest_date)
@@ -48,6 +72,8 @@ def generate_new_case_data(filename: str, minimum_case_count: int,
             # to the next, and will attempt to smooth out the data if the same
             # value is recorded 2 days in a row. When this happens it will
             # often be due to recording delay, not the reality of case counts.
+            # NOTE: If there are 3 days in a row with the same count, it does
+            # not attempt a smoothing.
             increases = get_daily_increases(post_minimum_case_counts)
             # The increases are currently reverse chronological, but we want
             # to record chronological for this data source.
