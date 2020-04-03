@@ -177,6 +177,28 @@ async function updateMap(daysPrior = 0) {
     .style("fill", d => color(caseData[d.id] ? Math.log(caseData[d.id].cases) : 0));
 }
 
+async function updateSliderLabel(slider, daysPrior = 0) {
+  const dates = await window.dataManager.getDates();
+  // I can't figure out how to get the date string output to not automatically
+  // use my local timezone to alter the output. So let's add 12 hours. Sigh.
+  const date = new Date(dates[daysPrior] + " 12:00");
+  const label = document.getElementById("js_slider_label");
+
+  const min = slider.min;
+  const max = slider.max;
+  // Calculates the percent through the slider we are right now.
+  const baseOffset = Number(((daysPrior - min) * 100) / (max - min));
+  // To center the text we slide it a bit right, and the further left it goes,
+  // the more so. This is a hack obviously.
+  const offset = baseOffset - (baseOffset * 0.07) - 1;
+
+  label.style.right = offset + "%";
+  const dateOptions = {month: 'long', day: 'numeric'};
+  const formattedDate =
+    new Intl.DateTimeFormat('un-US', dateOptions).format(date);
+  label.innerHTML = formattedDate.toString();
+}
+
 async function initSlider() {
   const dates = await window.dataManager.getDates();
   const slider = document.getElementById("js_map_slider");
@@ -189,6 +211,7 @@ async function initSlider() {
   slider.addEventListener("input", (e) => {
     const daysPrior = datesSinceFeb15.length - 1 - parseInt(e.target.value, 10);
     updateMap(daysPrior);
+    updateSliderLabel(slider, daysPrior);
   });
 }
 
@@ -216,8 +239,10 @@ export async function updateMapZoom() {
 export default async function initCaseCountMap() {
   const countyOutline = await window.dataManager.getCountyOutline();
   window.d3 = d3;
+  const slider = document.getElementById("js_map_slider");
 
   initSlider();
   drawMap(countyOutline);
   updateMap();
+  updateSliderLabel(slider);
 }
