@@ -2,12 +2,11 @@ import { json } from 'd3';
 import { urlifyName } from './utilities';
 
 class DataManager {
-  constructor(fips, cases, countyOutline, generateNewCases) {
+  constructor(fips, cases, countyOutline, newCases) {
     this.fips = fips;
     this.cases = cases;
     this.countyOutline = countyOutline;
-    // map of {fips: [newCases, newCases + 1]
-    this.newCases = generateNewCases(cases);
+    this.newCases = newCases;
   }
 
   async getFipsCountyName(fips) {
@@ -144,39 +143,11 @@ class DataManager {
   }
 }
 
-async function calculateNewCasesFromData(casesData) {
-  const newCases = {};
-  const casesByDate = await casesData;
-  const caseThreshold = 50;
-  const prevCases = {};
-
-  // Assumes data is ordered
-  Object.values(casesByDate).forEach((casesByFips) => {
-    Object.entries(casesByFips).forEach(([fips, values]) => {
-      const { cases } = values;
-      if (cases >= caseThreshold && fips in prevCases) {
-        const delta = cases - prevCases[fips];
-        prevCases[fips] = cases;
-        if (fips in newCases) {
-          newCases[fips].push(delta);
-        } else {
-          newCases[fips] = [delta];
-        }
-      } else {
-        // store value < 50 so that we can calculate our new cases once we
-        // cross the threshold.
-        prevCases[fips] = cases;
-      }
-    });
-  });
-  return Promise.resolve(newCases);
-}
-
 export default async function initDataManager() {
   window.dataManager = new DataManager(
     json("/data/fips_data.json"),
     json("/data/covid_cases_by_date.json"),
     json("/data/counties-albers-10m2.json"),
-    calculateNewCasesFromData
+    json("/data/new_case_data.json")
   );
 }
