@@ -27,7 +27,7 @@ function reset() {
 }
 
 // We want to separate map clicks from other app-level location updates
-function zoomToState(d) {
+function zoomToStateClick(d) {
   // if user has clicked on same node, zoom out
   if (active.node() === this) {
     reset();
@@ -44,6 +44,18 @@ function zoomToState(d) {
       d3.mouse(svg.node())
     );
   }
+}
+
+function zoomToState(d) {
+  active = d3.select(this);
+  const [[x0, y0], [x1, y1]] = path.bounds(d);
+  svg.transition().duration(750).call(
+    zoom.transform,
+    d3.zoomIdentity
+      .translate(width / 2, height / 2)
+      .scale(Math.min(8, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
+      .translate(-(x0 + x1) / 2, -(y0 + y1) / 2)
+  );
 }
 
 
@@ -73,7 +85,7 @@ function drawMap(countyOutline) {
     .join("path")
       .attr("pointer-events", "visible")
       .attr("id", d => `fips_${d.id}`)
-      .on("click", zoomToState)
+      .on("click", zoomToStateClick)
       .attr("d", path);
 
   // Draw state borders
@@ -111,11 +123,14 @@ async function initSlider() {
   });
 }
 
-export function updateMapZoom() {
+export async function updateMapZoom() {
   const stateFips = window.locationManager.getStateFips();
+
   if (stateFips) {
-    const stateBounds = d3.select(`#fips_${stateFips}`);
-    //zoomToState(stateBounds);
+    const countyOutline = await window.dataManager.getCountyOutline();
+    const states = topojson.feature(countyOutline, countyOutline.objects.states).features;
+    const selected = states.find(({ id }) => id === stateFips);
+    zoomToState(selected);
   } else {
     reset();
   }
@@ -123,6 +138,7 @@ export function updateMapZoom() {
 
 export default async function initCaseCountMap() {
   const countyOutline = await window.dataManager.getCountyOutline();
+  window.d3 = d3;
 
   initSlider();
   drawMap(countyOutline);
