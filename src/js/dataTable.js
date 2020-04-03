@@ -58,9 +58,9 @@ function updateTableMarkup() {
       ${row.county ? placeCell(row.state, row.county) : ""}
       ${window.locationManager.isCountryView() ? placeCell(row.state) : ""}
       <td class="number">${(row.cases || "").toLocaleString()}</td>
-      <td class="number">${(row.cases_per_capita || "").toLocaleString(undefined, {
-        minimumFractionDigits: 5
-      })}</td>
+      <td class="number">${(row.cases_per_capita * 100 || "").toLocaleString(undefined, {
+        minimumFractionDigits: 3
+      })}${(row.cases_per_capita ? "%" : "")}</td>
       <td class="number">${(row.growth_factor || "").toLocaleString(undefined, {
         minimumFractionDigits: 2,
       })}</td>
