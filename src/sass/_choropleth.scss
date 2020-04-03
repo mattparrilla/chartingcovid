@@ -1,5 +1,11 @@
+@use "palette";
+
 .choropleth {
   margin-bottom: 3rem;
+  svg {
+    border: 1px solid palette.$neutral_8;;
+    background: lighten(palette.$neutral_8, 3%);
+  }
 }
 
 #js_map_slider {

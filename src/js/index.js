@@ -1,7 +1,7 @@
 import initTrendChart, { updateTrendChart } from './trendChart';
 import initDataTable, { updateTable } from './dataTable';
 import initStateSelector, { updateSelectors } from './location';
-import initCaseCountMap from "./caseCountMap";
+import initCaseCountMap, { updateMapZoom } from "./caseCountMap";
 import initDataManager from './dataManager';
 import initLocationManager from './locationManager';
 import initLineChart, { updateLineChart } from './lineChart';
@@ -22,9 +22,10 @@ window.addEventListener("DOMContentLoaded", () => {
     .add('', () => {
       window.locationManager.updateFips();
       updateSelectors();
+      updateMapZoom();
+      updateLineChart();
       updateTrendChart();
       updateTable();
-      updateLineChart();
     })
 
     .add('state/(:any)', async (state) => {
@@ -37,9 +38,10 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       updateSelectors();
+      updateMapZoom();
+      updateLineChart();
       updateTrendChart();
       updateTable();
-      updateLineChart();
     })
 
     .add('state/(:any)/county/(:any)', async (state, county) => {
@@ -53,9 +55,10 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       updateSelectors();
+      updateMapZoom();
+      updateLineChart();
       updateTrendChart();
       updateTable();
-      updateLineChart();
     })
     .addUriListener()
     .navigateTo(window.location.pathname);
