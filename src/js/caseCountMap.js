@@ -19,6 +19,7 @@ let active = d3.select(null);
 
 
 function reset() {
+  active = d3.select(null);
   svg.transition().duration(750).call(
     zoom.transform,
     d3.zoomIdentity,
@@ -46,8 +47,9 @@ function zoomToStateClick(d) {
   }
 }
 
-function zoomToState(d) {
-  active = d3.select(this);
+// handle non-click zooms
+function zoomToState(d, node) {
+  active = node;
   const [[x0, y0], [x1, y1]] = path.bounds(d);
   svg.transition().duration(750).call(
     zoom.transform,
@@ -129,8 +131,9 @@ export async function updateMapZoom() {
   if (stateFips) {
     const countyOutline = await window.dataManager.getCountyOutline();
     const states = topojson.feature(countyOutline, countyOutline.objects.states).features;
-    const selected = states.find(({ id }) => id === stateFips);
-    zoomToState(selected);
+    const selectedFeature = states.find(({ id }) => id === stateFips);
+    const selectedNode = d3.select(`#fips_${stateFips}`);
+    zoomToState(selectedFeature, selectedNode);
   } else {
     reset();
   }
