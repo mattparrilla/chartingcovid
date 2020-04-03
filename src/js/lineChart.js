@@ -14,73 +14,126 @@ const line = d3.line()
   // don't show values below 0
   .y((d) => d > 1 ? y(d) : y(0));
 
+
+function generateHighlights(data) {
+  // array of summary statistic objects, for figuring out highlights
+  const summaryStatistics = Object.entries(data)
+    .map(([fips, newCases]) => ({
+      fips,
+      maxNewCases: d3.max(newCases),
+      daysSince50: newCases.length,
+      latestNewCases: newCases[newCases.length - 1]
+    }))
+    .sort((a, b) => b.maxNewCases > a.maxNewCases ? 1 : -1);
+
+  const fastestRisers = summaryStatistics.sort((a, b) => (
+    b.latestNewCases > a.latestNewCases ? 1 : -1
+  ));
+  const longestDuration = summaryStatistics.sort((a, b) => (
+    b.daysSince50 > a.daysSince50 ? 1 : -1
+  ));
+  const highestPeak = summaryStatistics.sort((a, b) => (
+    b.maxNewCases > a.maxNewCases ? 1 : -1
+  ));
+
+  let i = 0;
+  let highlights = [];
+  const categories = [highestPeak, longestDuration, fastestRisers];
+  while (highlights.length < 5) {
+    categories.forEach(category => {
+      const fips = category[i].fips;
+      if (!highlights.includes(fips)) {
+        highlights.push(fips);
+      }
+    });
+    i++;
+  }
+
+  return highlights;
+}
+
 export async function updateLineChart() {
+  // if state hasn't changed, don't update this chart
+  if (!window.locationManager.isNewState()) {
+    return;
+  }
   const data = window.locationManager.isCountryView() ?
     await window.dataManager.getNewCasesAllStates() :
     await window.dataManager.getNewCasesGivenState(window.locationManager.getStateFips());
 
   // TODO: handle no data for state
 
-  // TODO: filter out entries with only a single day of new cases
-  // TODO: filter out last entry if number of cases is zero
-
   // Remove existing elements
   svg.selectAll("g .circle").remove();
   svg.selectAll("g .line").remove();
   svg.selectAll("g .label").remove();
+  svg.selectAll(".legend_item").remove();
 
-  // Highlight
-  const entriesByLength = Object.entries(data).sort((a, b) => (
-    a[1].length > b[1].length ? 1 : -1
-  ));
-  const highlights = entriesByLength
-    .slice(Math.max(entriesByLength.length - 5, 1))
-    .map(([fips]) => fips);
+  const highlights = generateHighlights(data);
+  const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-  // TODO: Highlight seleted county if in map
+  function lineColor(d) {
+    const highlightIndex = highlights.indexOf(d);
+    return highlightIndex >= 0 ? color(d) : "#aaa";
+  }
 
-  svg.append("g")
-    .selectAll(".circle")
-    .remove()
+  const g = svg
+    .append("g")
+    .attr("class", "line_container");
+
+  const newCasesLine = g.selectAll(".new_cases_line")
     .data(Object.keys(data))
     .enter()
+    .append("g")
+      .attr("class", d => highlights.includes(d) ? "highlight new_cases_line" : "new_cases_line");
+
+  newCasesLine
     .append("circle")
-      .attr("class", d => `${highlights.includes(d) ? "highlight" : d} circle`)
+      .attr("class", "circle")
       .attr("r", 4)
       .attr("cx", d => x(data[d].length - 1))
-      // TODO: avoid conflicts
-      .attr("cy", d => y(data[d][data[d].length - 1]));
+      .attr("cy", d => y(data[d][data[d].length - 1]))
+      .style("fill", lineColor);
 
-  svg.append("g")
-    .selectAll(".line")
-    .data(Object.keys(data))
-    .enter()
+  newCasesLine
     .append("path")
-      .attr("class", d => `${highlights.includes(d) ? "highlight" : d} line`)
-      .attr("d", d => line(data[d]));
-
+      .attr("class", "line")
+      .attr("d", d => line(data[d]))
+      .style("stroke", lineColor);
 
   const highlightLabels = await Promise.all(highlights.map(async d => (
     window.dataManager.getNameByFips(d))));
 
-  svg.append("g")
-    .selectAll(".label")
-    .data(highlights)
+  const legendItems = svg.select(".legend")
+    .selectAll(".legend_item")
+    .data(highlightLabels)
     .enter()
-    .append("text")
-      .attr("class", "label")
-      .attr("x", d => x(data[d].length - 1) + 10)
-      .attr("y", d => y(data[d][data[d].length - 1]) + 5)
-      .text((d, i) => highlightLabels[i]);
+      .append("g")
+      .attr("class", "legend_item");
 
-  svg.selectAll(".highlight")
-    .raise();
+  function legendY(i) {
+    return margin.top + 10 + (i * 20);
+  }
+  const legendX = width - 200;
+  legendItems
+    .append("circle")
+      .attr("class", "legend_circle")
+      .attr("r", 4)
+      .attr("cx", legendX - 15)
+      .attr("cy", (d, i) => legendY(i) - 5)
+      .style("fill", (d, i) => lineColor(highlights[i]));
+
+  legendItems
+    .append("text")
+      .attr("class", "legend_key")
+      .attr("x", legendX)
+      .attr("y", (d, i) => legendY(i))
+      .text(d => d);
 }
 
 export default async function initLineChart() {
   const data = await window.dataManager.getNewCasesAllStates();
 
-  // TODO: use d3.extent for this
   // Find the maximum number of days with cases over the threshold and maximum
   // number of new cases across all FIPS.
   // Don't update this value as we change selected location
@@ -103,6 +156,9 @@ export default async function initLineChart() {
   svg.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .call(d3.axisBottom(x));
+
+  svg.append("g")
+    .attr("class", "legend");
 
   let ticks = [0];
   let displayTicks = [0];

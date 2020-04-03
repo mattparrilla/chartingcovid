@@ -30,6 +30,11 @@ function reset() {
   // re-enable pointer events on state boundaries
   svg.selectAll(".js_state_bounds")
       .attr("pointer-events", "visible");
+
+  // clear highlighted class from all counties
+  svg.selectAll(".map_county")
+    .attr("class", "map_county")
+    .style("stroke", "white");
 }
 
 function zoomToState(d, node) {

@@ -8,16 +8,8 @@
   fill: none;
   stroke: palette.$neutral_6;
   stroke-width: 2px;
-
-  &.highlight {
-    stroke: palette.$neutral_1;
-  }
 }
 
-.circle {
-  fill: palette.$neutral_6;
-  stroke: palette.$neutral_9;
-  &.highlight {
-    fill: palette.$neutral_1;
-  }
+.legend_key {
+  font-size: 1.4rem;
 }

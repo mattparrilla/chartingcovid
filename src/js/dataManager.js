@@ -131,7 +131,10 @@ class DataManager {
     const state = await this.getFipsStateName(stateFips);
     const cases = {};
     Object.entries(fipsData).forEach(([fips, fipsInfo]) => {
-      if (fipsInfo.county && fipsInfo.state === state && newCasesData[fips]) {
+      // if this is our state and county and we have more than one day since
+      // cases went > 50, add data
+      if (fipsInfo.county && fipsInfo.state === state &&
+        newCasesData[fips] && newCasesData[fips].length > 1) {
         cases[fips] = newCasesData[fips];
       }
     });
