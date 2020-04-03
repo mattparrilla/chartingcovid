@@ -8,6 +8,14 @@
   fill: none;
   stroke: palette.$neutral_6;
   stroke-width: 2px;
+
+  &.hover {
+    stroke: palette.$neutral_1 !important;
+  }
+}
+
+.circle.hover {
+  fill: palette.$neutral_1 !important;
 }
 
 .legend_key {

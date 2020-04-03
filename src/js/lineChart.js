@@ -59,6 +59,32 @@ function generateHighlights(data) {
   return highlights;
 }
 
+function showLabel(d) {
+  d3.select(`#js_new_cases_${d}`)
+    .style("display", "block");
+
+  // bring line to front
+  d3.select(`.line_${d}`)
+    .raise();
+
+  d3.select(`.line_${d} .line`)
+    .attr("class", "hover line");
+
+  d3.select(`.line_${d} .circle`)
+    .attr("class", "hover circle");
+}
+
+function hideLabel(d) {
+  d3.select(`#js_new_cases_${d}`)
+    .style("display", "none");
+
+  d3.select(`.line_${d} .line`)
+    .attr("class", "line");
+
+  d3.select(`.line_${d} .circle`)
+    .attr("class", "circle");
+}
+
 export async function updateLineChart() {
   const data = window.locationManager.isCountryView() ?
     await window.dataManager.getNewCasesAllStates() :
@@ -67,9 +93,7 @@ export async function updateLineChart() {
   // TODO: handle no data for state
 
   // Remove existing elements
-  svg.selectAll("g .circle").remove();
-  svg.selectAll("g .line").remove();
-  svg.selectAll("g .label").remove();
+  svg.selectAll(".new_cases_line").remove();
   svg.selectAll(".legend_item").remove();
 
   const highlights = generateHighlights(data);
@@ -80,6 +104,14 @@ export async function updateLineChart() {
     return highlightIndex >= 0 ? color(d) : "#aaa";
   }
 
+  // make map between fips and name of location
+  const placeLabels = {};
+  for (const fips in data) {
+    if (data.hasOwnProperty(fips)) {
+      placeLabels[fips] = await window.dataManager.getNameByFips(fips);
+    }
+  }
+
   const g = svg
     .append("g")
     .attr("class", "line_container");
@@ -88,7 +120,7 @@ export async function updateLineChart() {
     .data(Object.keys(data))
     .enter()
     .append("g")
-      .attr("class", d => highlights.includes(d) ? "highlight new_cases_line" : "new_cases_line");
+      .attr("class", d => `new_cases_line line_${d}`);
 
   newCasesLine
     .append("circle")
@@ -96,20 +128,30 @@ export async function updateLineChart() {
       .attr("r", 4)
       .attr("cx", d => x(data[d].length - 1))
       .attr("cy", d => y(data[d][data[d].length - 1]))
-      .style("fill", lineColor);
+      .style("fill", lineColor)
+      .on("mouseover", showLabel)
+      .on("mouseout", hideLabel);
+
 
   newCasesLine
     .append("path")
       .attr("class", "line")
       .attr("d", d => line(data[d]))
-      .style("stroke", lineColor);
+      .style("stroke", lineColor)
+      .on("mouseover", showLabel)
+      .on("mouseout", hideLabel);
 
-  const highlightLabels = await Promise.all(highlights.map(async d => (
-    window.dataManager.getNameByFips(d))));
+  newCasesLine
+    .append("text")
+      .attr("x", d => x(data[d].length - 1) + 15)
+      .attr("y", d => y(data[d][data[d].length - 1]) + 5)
+      .attr("id", d => `js_new_cases_${d}`)
+      .text(d => placeLabels[d])
+      .style("display", "none");
 
   const legendItems = svg.select(".legend")
     .selectAll(".legend_item")
-    .data(highlightLabels)
+    .data(highlights)
     .enter()
       .append("g")
       .attr("class", "legend_item");
@@ -117,6 +159,7 @@ export async function updateLineChart() {
   function legendY(i) {
     return margin.top + 10 + (i * 20);
   }
+
   const legendX = width - 200;
   legendItems
     .append("circle")
@@ -124,14 +167,14 @@ export async function updateLineChart() {
       .attr("r", 4)
       .attr("cx", legendX - 15)
       .attr("cy", (d, i) => legendY(i) - 5)
-      .style("fill", (d, i) => lineColor(highlights[i]));
+      .style("fill", lineColor);
 
   legendItems
     .append("text")
       .attr("class", "legend_key")
       .attr("x", legendX)
       .attr("y", (d, i) => legendY(i))
-      .text(d => d);
+      .text(d => placeLabels[d]);
 }
 
 export default async function initLineChart() {
