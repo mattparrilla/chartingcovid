@@ -1,15 +1,14 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 
-let svg;
+const path = d3.geoPath();
+const width = 975;
+const height = 610;
+const svg = d3.select("#js_map")
+  .append("svg")
+  .attr("viewBox", [0, 0, width, height]);
 
 function drawMap(countyOutline) {
-  svg = d3.select("#js_map")
-    .append("svg")
-    .attr("viewBox", [0, 0, 975, 610]);
-
-  const path = d3.geoPath();
-
   // Draw counties
   svg.append("g")
     .selectAll("path")
@@ -39,6 +38,9 @@ async function updateMap(daysPrior = 0) {
   const color = d3.scaleQuantize(extent, d3.schemeOranges[9]);
 
   svg.selectAll(".map_county")
+    .transition()
+    .delay(300)
+    .duration(500)
     .attr("fill", d => color(caseData[d.id] ? Math.log(caseData[d.id].cases) : 0));
 }
 
