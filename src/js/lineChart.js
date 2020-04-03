@@ -77,6 +77,7 @@ export async function updateLineChart() {
 export default async function initLineChart() {
   const data = await window.dataManager.getNewCasesAllStates();
 
+  // TODO: use d3.extent for this
   // Find the maximum number of days with cases over the threshold and maximum
   // number of new cases across all FIPS.
   // Don't update this value as we change selected location

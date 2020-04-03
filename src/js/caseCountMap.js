@@ -1,34 +1,103 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 
-let svg;
+const path = d3.geoPath();
+const width = 975;
+const height = 610;
+const svg = d3.select("#js_map")
+  .append("svg")
+  .attr("viewBox", [0, 0, width, height]);
+const g = svg.append("g");
+const zoom = d3.zoom()
+    .scaleExtent([1, 8])
+    .on("zoom", () => {
+      const { transform } = d3.event;
+      g.attr("transform", transform);
+      g.attr("stroke-width", 1 / transform.k);
+    });
+let active = d3.select(null);
+
+
+function reset() {
+  svg.transition().duration(750).call(
+    zoom.transform,
+    d3.zoomIdentity,
+    d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+  );
+}
+
+// We want to separate map clicks from other app-level location updates
+function zoomToStateClick(d) {
+  // if user has clicked on same node, zoom out
+  if (active.node() === this) {
+    reset();
+  } else {
+    active = d3.select(this);
+    const [[x0, y0], [x1, y1]] = path.bounds(d);
+    d3.event.stopPropagation();
+    svg.transition().duration(750).call(
+      zoom.transform,
+      d3.zoomIdentity
+        .translate(width / 2, height / 2)
+        .scale(Math.min(8, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
+        .translate(-(x0 + x1) / 2, -(y0 + y1) / 2),
+      d3.mouse(svg.node())
+    );
+  }
+}
+
+function zoomToState(d) {
+  active = d3.select(this);
+  const [[x0, y0], [x1, y1]] = path.bounds(d);
+  svg.transition().duration(750).call(
+    zoom.transform,
+    d3.zoomIdentity
+      .translate(width / 2, height / 2)
+      .scale(Math.min(8, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
+      .translate(-(x0 + x1) / 2, -(y0 + y1) / 2)
+  );
+}
+
 
 function drawMap(countyOutline) {
-  svg = d3.select("#js_map")
-    .append("svg")
-    .attr("viewBox", [0, 0, 975, 610]);
+  svg.on("click", reset);
 
-  const path = d3.geoPath();
+  // enable zoom and pan with mouse in SVG element
+  svg.call(zoom);
 
   // Draw counties
-  svg.append("g")
+  g.append("g")
     .selectAll("path")
     .data(topojson.feature(countyOutline, countyOutline.objects.counties).features)
     .join("path")
       .attr("class", "map_county")
       .attr("d", path)
+      .attr("stroke", "white")
+      .attr("stroke-width", 0.5)
       .attr("fill", "white");
 
-  // Draw state borders
-  svg.append("path")
-      .datum(topojson.mesh(
-        countyOutline, countyOutline.objects.states, (a, b) => a !== b
-      ))
+  // Add invisible states
+  g.append("g")
       .attr("fill", "none")
-      .attr("stroke", "white")
-      .attr("stroke-width", 2)
-      .attr("stroke-linejoin", "round")
+      .attr("cursor", "pointer")
+    .selectAll("path")
+    .data(topojson.feature(countyOutline, countyOutline.objects.states).features)
+    .join("path")
+      .attr("pointer-events", "visible")
+      .attr("id", d => `fips_${d.id}`)
+      .on("click", zoomToStateClick)
       .attr("d", path);
+
+  // Draw state borders
+  g.append("path")
+    .datum(topojson.mesh(
+      countyOutline, countyOutline.objects.states, (a, b) => a !== b
+    ))
+    .attr("fill", "none")
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
+    .attr("stroke-linejoin", "round")
+    .attr("d", path);
 }
 
 async function updateMap(daysPrior = 0) {
@@ -54,8 +123,22 @@ async function initSlider() {
   });
 }
 
+export async function updateMapZoom() {
+  const stateFips = window.locationManager.getStateFips();
+
+  if (stateFips) {
+    const countyOutline = await window.dataManager.getCountyOutline();
+    const states = topojson.feature(countyOutline, countyOutline.objects.states).features;
+    const selected = states.find(({ id }) => id === stateFips);
+    zoomToState(selected);
+  } else {
+    reset();
+  }
+}
+
 export default async function initCaseCountMap() {
   const countyOutline = await window.dataManager.getCountyOutline();
+  window.d3 = d3;
 
   initSlider();
   drawMap(countyOutline);
