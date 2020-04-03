@@ -3,20 +3,22 @@
   <span data-type="county">County</span>
   <span data-type="state" class="active">State</span>
 </div>
-<table class="table">
-  <thead id="js_thead">
-    <tr>
-      <th>Row</th>
-      <th id="county_header" data-column="county">County</th>
-      <th id="state_header" data-column="state">State</th>
-      <th class="descending" data-column="cases">Confirmed Cases</th>
-      <th data-column="cases_per_capita">Cases Per Capita</th>
-      <th data-column="growth_factor">Growth Factor</th>
-      <th data-column="doubling_time">Doubling Time (Days)</th>
-    </tr>
-  </thead>
+<div class="datatable">
+  <table class="table">
+    <thead id="js_thead">
+      <tr>
+        <th>Row</th>
+        <th id="county_header" data-column="county">County</th>
+        <th id="state_header" data-column="state">State</th>
+        <th class="descending" data-column="cases">Confirmed Cases</th>
+        <th data-column="cases_per_capita">Cases Per Capita</th>
+        <th data-column="growth_factor">Growth Factor</th>
+        <th data-column="doubling_time">Doubling Time (Days)</th>
+      </tr>
+    </thead>
 
-  <tbody id="js_tbody">
-  </tbody>
-</table>
-<div id="js_county_disclaimer">Only showing top 100 counties for a given column sort.</div>
+    <tbody id="js_tbody">
+    </tbody>
+  </table>
+  <div id="js_county_disclaimer">Only showing top 100 counties for a given column sort.</div>
+</div>

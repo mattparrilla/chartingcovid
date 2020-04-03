@@ -1,0 +1,362 @@
+#js_table_county_vs_state {
+  font-size: 1.6rem;
+  color: #616161;
+  margin-bottom: 2rem;
+}
+#js_table_county_vs_state span {
+  margin-left: 1rem;
+  cursor: pointer;
+}
+#js_table_county_vs_state span.active {
+  border-bottom: 2px solid #7d7d7d;
+}
+
+#js_county_disclaimer {
+  text-align: center;
+}
+
+.datatable {
+  width: 100%;
+  overflow-x: scroll;
+}
+
+.table {
+  /* Remove spacing between table cells (from Normalize.css) */
+  border-collapse: collapse;
+  border-spacing: 0;
+  empty-cells: show;
+  border: 1px solid #cbcbcb;
+  width: 100%;
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+}
+
+.table caption {
+  color: #000;
+  font: italic 85%/1 arial, sans-serif;
+  padding: 1em 0;
+  text-align: center;
+}
+
+th:before,
+th:before {
+  content: "";
+  float: right;
+  height: 2rem;
+  width: 2rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url("/static/icons/descending.svg");
+  opacity: 0.3;
+}
+
+th:first-child:before {
+  content: none;
+}
+
+th.ascending:before {
+  background-image: url("/static/icons/ascending.svg");
+}
+
+th.descending:before,
+th.ascending:before {
+  opacity: 1;
+}
+
+th {
+  cursor: pointer;
+}
+
+td.number {
+  text-align: right;
+}
+
+.table td,
+.table th {
+  border-left: 1px solid #cbcbcb;
+  /*  inner column border */
+  border-width: 0 0 0 1px;
+  font-size: inherit;
+  margin: 0;
+  overflow: visible;
+  /*to make ths where the title is really long work*/
+  padding: 0.5em 1em;
+  /* cell padding */
+}
+
+.table thead {
+  background-color: #e0e0e0;
+  color: #3b3b3b;
+  text-align: center;
+  vertical-align: bottom;
+}
+
+/* BORDERED TABLES */
+.table td {
+  border-bottom: 1px solid #cbcbcb;
+}
+
+.table tbody > tr:last-child > td {
+  border-bottom-width: 0;
+}
+
+/* HORIZONTAL BORDERED TABLES */
+.table td,
+.table th {
+  border-width: 0 0 1px 1px;
+  border-bottom: 1px solid #cbcbcb;
+}
+
+.table tbody > tr:last-child > td {
+  border-bottom-width: 0;
+}
+
+tr.highlight {
+  font-weight: bold;
+  background: #ffd2b8;
+}
+
+@media (max-width: 1000px) {
+  .datatable th:first-child, .datatable td:first-child {
+    display: none;
+  }
+}
+#js_trend_chart {
+  margin-bottom: 5rem;
+  position: relative;
+  min-height: 5rem;
+}
+#js_trend_chart svg {
+  border: 1px solid #cfcfcf;
+}
+#js_trend_chart svg rect {
+  fill: #ef8f57;
+}
+
+#js_chart_scale_selector {
+  font-size: 1.6rem;
+  color: #616161;
+  margin-bottom: 2rem;
+}
+#js_chart_scale_selector span {
+  margin-left: 1rem;
+  cursor: pointer;
+}
+#js_chart_scale_selector span.active {
+  border-bottom: 2px solid #7d7d7d;
+}
+
+.choropleth {
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+#js_map svg {
+  border: 1px solid #cfcfcf;
+  background: #e8e8e8;
+}
+
+#js_map_slider {
+  width: 100%;
+}
+
+#js_map_legend > rect {
+  fill: #f7f7f7;
+  fill-opacity: 0.95;
+  stroke: #e0e0e0;
+}
+
+#js_days_since_chart {
+  margin-bottom: 5rem;
+}
+#js_days_since_chart svg {
+  border: 1px solid #cfcfcf;
+}
+
+.line {
+  fill: none;
+  stroke: #b0b0b0;
+  stroke-width: 2px;
+}
+.line.hover {
+  stroke: #3b3b3b !important;
+}
+
+.circle.hover {
+  fill: #3b3b3b !important;
+}
+
+.legend_key {
+  font-size: 1.4rem;
+}
+
+#js_map {
+  margin-bottom: 2rem;
+}
+
+#js_map_slider {
+  margin: 2rem 0 8rem;
+}
+
+#map_slider {
+  position: relative;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  width: 80%;
+  left: 10%;
+}
+#map_slider output {
+  position: absolute;
+  top: 7rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  margin: 12.5px 0;
+}
+
+input[type=range]:focus {
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 7px;
+  cursor: pointer;
+  background: rgba(48, 113, 169, 0.78);
+  border-radius: 5px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  border: 2px solid #666666;
+  height: 32px;
+  width: 32px;
+  border-radius: 15px;
+  background: #ffffff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -12.6px;
+}
+
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: rgba(54, 126, 189, 0.78);
+}
+
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 7px;
+  cursor: pointer;
+  background: rgba(48, 113, 169, 0.78);
+  border-radius: 5px;
+  border: 0.1px solid #010101;
+}
+
+input[type=range]::-moz-range-thumb {
+  border: 2px solid #666666;
+  height: 32px;
+  width: 32px;
+  border-radius: 15px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 7px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+input[type=range]::-ms-fill-lower {
+  background: rgba(42, 100, 149, 0.78);
+  border: 0.1px solid #010101;
+  border-radius: 10px;
+}
+
+input[type=range]::-ms-fill-upper {
+  background: rgba(48, 113, 169, 0.78);
+  border: 0.1px solid #010101;
+  border-radius: 10px;
+}
+
+input[type=range]::-ms-thumb {
+  border: 2px solid #666666;
+  height: 32px;
+  width: 32px;
+  border-radius: 15px;
+  background: #ffffff;
+  cursor: pointer;
+  height: 7px;
+}
+
+input[type=range]:focus::-ms-fill-lower {
+  background: rgba(48, 113, 169, 0.78);
+}
+
+input[type=range]:focus::-ms-fill-upper {
+  background: rgba(54, 126, 189, 0.78);
+}
+
+html {
+  font-family: proxima-nova, sans-serif;
+  font-weight: 400;
+  color: #525252;
+  background: #f7f7f7;
+  margin: 0;
+  font-size: 62.5%;
+}
+
+body {
+  max-width: 100rem;
+  margin: 0 auto 3rem;
+  font-size: 1.8rem;
+}
+
+@media (max-width: 1000px) {
+  body {
+    margin: 0 10px 3rem;
+  }
+}
+h1 {
+  font-family: proxima-nova-condensed, sans-serif;
+  font-weight: 700;
+  color: #3b3b3b;
+  font-size: 4.8rem;
+  line-height: 4.8rem;
+}
+
+h2 {
+  font-weight: 700;
+  font-size: 3.2rem;
+  line-height: 3.2rem;
+  color: #3b3b3b;
+}
+
+.basic_button {
+  border: 0;
+  padding: 1.5rem;
+  font-size: 1.8rem;
+  border-radius: 5px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+  font-weight: 600;
+}
+
+#js_select_county {
+  display: none;
+}
+
+svg text {
+  font-size: 1.8rem;
+}
+
+@media (max-width: 500px) {
+  svg text {
+    font-size: 2.4rem;
+  }
+}

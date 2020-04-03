@@ -18,6 +18,11 @@
   text-align: center;
 }
 
+.datatable {
+  width: 100%;
+  overflow-x: scroll
+}
+
 .table {
   /* Remove spacing between table cells (from Normalize.css) */
   border-collapse: collapse;
@@ -110,4 +115,12 @@ td.number {
 tr.highlight {
   font-weight: bold;
   background: palette.$primary_8;
+}
+
+@media (max-width: 1000px) {
+  .datatable {
+    th:first-child, td:first-child {
+      display: none;
+    }
+  }
 }

@@ -19,16 +19,22 @@
   "dependencies": {
     "@gfx/zopfli": "^1.0.14",
     "compression-webpack-plugin": "^3.1.0",
+    "css-loader": "^3.4.2",
     "d3": "^5.15.0",
+    "extract-loader": "^5.0.1",
+    "file-loader": "^6.0.0",
     "npm": "^6.13.7",
+    "sass-loader": "^8.0.2",
     "topojson-client": "^3.1.0",
     "vanilla-router": "^1.2.8"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
     "@babel/preset-env": "^7.8.7",
+    "autoprefixer": "^9.7.5",
     "babel-loader": "^8.0.6",
-    "sass": "^1.25.0",
+    "postcss-loader": "^3.0.0",
+    "sass": "^1.26.3",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
   },

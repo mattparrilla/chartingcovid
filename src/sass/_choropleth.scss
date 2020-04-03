@@ -2,12 +2,21 @@
 
 .choropleth {
   margin-bottom: 3rem;
-  svg {
-    border: 1px solid palette.$neutral_7;;
-    background: lighten(palette.$neutral_8, 3%);
-  }
+  position: relative;
+}
+
+
+#js_map svg {
+  border: 1px solid palette.$neutral_7;;
+  background: lighten(palette.$neutral_8, 3%);
 }
 
 #js_map_slider {
   width: 100%;
+}
+
+#js_map_legend > rect {
+  fill: palette.$neutral_9;
+  fill-opacity: 0.95;
+  stroke: palette.$neutral_8;
 }

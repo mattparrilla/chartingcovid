@@ -21,16 +21,24 @@ body {
   font-size: 1.8rem;
 }
 
+@media (max-width: 1000px) {
+  body {
+    margin: 0 10px 3rem;
+  }
+}
+
 h1 {
   font-family: proxima-nova-condensed, sans-serif;
   font-weight: 700;
   color: palette.$neutral_1;
   font-size: 4.8rem;
+  line-height: 4.8rem;
 }
 
 h2 {
   font-weight: 700;
   font-size: 3.2rem;
+  line-height: 3.2rem;
   color: palette.$neutral_1;
 }
 
@@ -50,4 +58,10 @@ h2 {
 
 svg text {
   font-size: 1.8rem;
+}
+
+@media (max-width: 500px) {
+  svg text {
+    font-size: 2.4rem;
+  }
 }

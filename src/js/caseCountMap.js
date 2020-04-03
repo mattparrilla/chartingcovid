@@ -29,11 +29,6 @@ function reset() {
   // re-enable pointer events on state boundaries
   svg.selectAll(".js_state_bounds")
       .attr("pointer-events", "visible");
-
-  // // clear highlighted class from all counties
-  // svg.selectAll(".map_county")
-  //   .attr("class", "map_county")
-  //   .style("stroke", "white");
 }
 
 function zoomToState(d, node) {
@@ -118,6 +113,64 @@ async function countyMouseOut() {
     svg.select(".highlight_county")
       .raise();
   }
+}
+
+async function drawLegend() {
+  const mostRecentData = await window.dataManager.getMostRecentData();
+  const extent =
+    d3.extent((Object.values(mostRecentData)).map(c => Math.log(c.cases)));
+  const ticks = 9;
+  const color = d3.scaleQuantize(extent, d3.schemeOranges[ticks]);
+
+  const legendWidth = 120;
+  const legendHeight = 220;
+  const legendMargin = 10; // top, bottom, left, right
+
+  const thresholds = color.thresholds();
+  const thresholdFormat = d => d3.format(",.0f")(Math.exp(d));
+  const tickSize = 20;
+
+  const x = d3.scaleLinear()
+    .domain([-1, color.range().length - 1])
+    .rangeRound([0, ticks * tickSize]);
+
+  const legend = svg.append("g")
+    .attr("id", "js_map_legend")
+    .attr("height", legendHeight)
+    .attr("width", legendWidth)
+    .attr("transform", `translate(${width - legendWidth - legendMargin}, ${legendMargin})`);
+
+  legend.append("rect")
+    .attr("height", legendHeight)
+    .attr("width", legendWidth);
+
+  legend.append("g")
+    .selectAll("rect")
+    .data(color.range())
+    .join("rect")
+      .attr("x", legendWidth - tickSize - legendMargin)
+      .attr("y", (d, i) => x(i - 1) + legendMargin)
+      .attr("width", tickSize)
+      .attr("height", tickSize)
+      .attr("fill", d => d);
+
+  const tickValues = d3.range(thresholds.length);
+  const tickFormat = i => thresholdFormat(thresholds[i], i);
+
+  legend.append("g")
+    .attr("transform", `translate(${legendWidth - legendMargin - tickSize},${legendMargin})`)
+    .call(d3.axisLeft(x)
+      .ticks(ticks)
+      .tickFormat(tickFormat)
+      .tickSize(0)
+      .tickValues(tickValues))
+      .call(el => el.append("text")
+        .attr("x", 0)
+        .attr("y", legendHeight - 20)
+        .attr("fill", "currentColor")
+        .attr("text-anchor", "begin")
+        .attr("font-weight", "bold")
+        .text("Cases"));
 }
 
 function drawMap(countyOutline) {
@@ -242,6 +295,7 @@ export default async function initCaseCountMap() {
   const slider = document.getElementById("js_map_slider");
 
   initSlider();
+  drawLegend();
   drawMap(countyOutline);
   updateMap();
   updateSliderLabel(slider);
