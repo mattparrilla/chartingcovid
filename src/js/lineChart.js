@@ -21,6 +21,9 @@ export async function updateLineChart() {
 
   // TODO: handle no data for state
 
+  // TODO: filter out entries with only a single day of new cases
+  // TODO: filter out last entry if number of cases is zero
+
   // Remove existing elements
   svg.selectAll("g .circle").remove();
   svg.selectAll("g .line").remove();

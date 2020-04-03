@@ -3,12 +3,8 @@
 .choropleth {
   margin-bottom: 3rem;
   svg {
-    border: 1px solid palette.$neutral_8;;
+    border: 1px solid palette.$neutral_7;;
     background: lighten(palette.$neutral_8, 3%);
-  }
-
-  .highlight_county {
-    stroke: palette.$green_4;
   }
 }
 

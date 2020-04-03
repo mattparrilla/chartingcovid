@@ -1,6 +1,8 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
+import router from './router';
 
+const maxZoom = 20;
 const path = d3.geoPath();
 const width = 975;
 const height = 610;
@@ -9,7 +11,7 @@ const svg = d3.select("#js_map")
   .attr("viewBox", [0, 0, width, height]);
 const g = svg.append("g");
 const zoom = d3.zoom()
-    .scaleExtent([1, 25])
+    .scaleExtent([1, maxZoom])
     .on("zoom", () => {
       const { transform } = d3.event;
       g.attr("transform", transform);
@@ -25,9 +27,16 @@ function reset() {
     d3.zoomIdentity,
     d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
   );
+  // re-enable pointer events on state boundaries
+  svg.selectAll(".js_state_bounds")
+      .attr("pointer-events", "visible");
 }
 
 function zoomToState(d, node) {
+  // disable pointer events while we're zoomed on state
+  svg.selectAll(".js_state_bounds")
+      .attr("pointer-events", "none");
+
   active = node;
   const [[x0, y0], [x1, y1]] = path.bounds(d);
   svg.transition().duration(750).call(
@@ -40,30 +49,71 @@ function zoomToState(d, node) {
 }
 
 // We want to separate map clicks from other app-level location updates
-function zoomToStateClick(d) {
+async function zoomToStateClick(d) {
   // if user has clicked on same node, zoom out
   if (active.node() === this) {
     reset();
   } else {
     d3.event.stopPropagation();
-    const node = d3.select(this);
-    zoomToState(d, node);
+    const newUrl = await window.dataManager.getUrlForFips(d.id);
+    router.navigateTo(newUrl);
   }
 }
 
 // handle non-click zooms
 function zoomToCounty(d, node) {
+  // clear highlighted class from all counties
+  svg.selectAll(".map_county")
+    .attr("class", "map_county")
+    .style("stroke", "white");
+
+  // disable pointer events while we're zoomed on state
+  svg.selectAll(".js_state_bounds")
+      .attr("pointer-events", "none");
+
   active = node;
   const [[x0, y0], [x1, y1]] = path.bounds(d);
   node.raise();
   node.attr("class", "map_county highlight_county");
+  node.style("stroke", "#409142");
   svg.transition().duration(750).call(
     zoom.transform,
     d3.zoomIdentity
       .translate(width / 2, height / 2)
-      .scale(Math.min(25, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
+      .scale(Math.min(maxZoom, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
       .translate(-(x0 + x1) / 2, -(y0 + y1) / 2)
   );
+}
+
+// We want to separate map clicks from other app-level location updates
+async function zoomToCountyClick(d) {
+  // if user has clicked on same node, zoom out
+  if (active.node() === this) {
+    reset();
+  } else {
+    d3.event.stopPropagation();
+    const newUrl = await window.dataManager.getUrlForFips(d.id);
+    router.navigateTo(newUrl);
+  }
+}
+
+function countyMouseOver() {
+  const county = d3.select(this);
+  // don't change outline of this is our selected county
+  if (!county.attr("class").includes("highlight_county")) {
+    county.style("stroke", "red");
+    county.raise();
+  }
+}
+
+async function countyMouseOut() {
+  const county = d3.select(this);
+  // update county outline if this isn't our selected county
+  if (!county.attr("class").includes("highlight_county")) {
+    county.style("stroke", "white");
+    svg.select(".highlight_county")
+      .raise();
+  }
 }
 
 function drawMap(countyOutline) {
@@ -78,6 +128,9 @@ function drawMap(countyOutline) {
     .data(topojson.feature(countyOutline, countyOutline.objects.counties).features)
     .join("path")
       .attr("class", "map_county")
+      .on("mouseover", countyMouseOver)
+      .on("mouseout", countyMouseOut)
+      .on("click", zoomToCountyClick)
       .attr("id", d => `js_fips_${d.id}`)
       .attr("d", path)
       .attr("stroke", "white")
@@ -91,6 +144,7 @@ function drawMap(countyOutline) {
     .selectAll("path")
     .data(topojson.feature(countyOutline, countyOutline.objects.states).features)
     .join("path")
+      .attr("class", "js_state_bounds")
       .attr("pointer-events", "visible")
       .attr("id", d => `js_fips_${d.id}`)
       .on("click", zoomToStateClick)
@@ -116,7 +170,7 @@ async function updateMap(daysPrior = 0) {
   const color = d3.scaleQuantize(extent, d3.schemeOranges[9]);
 
   svg.selectAll(".map_county")
-    .attr("fill", d => color(caseData[d.id] ? Math.log(caseData[d.id].cases) : 0));
+    .style("fill", d => color(caseData[d.id] ? Math.log(caseData[d.id].cases) : 0));
 }
 
 async function initSlider() {
@@ -137,10 +191,6 @@ async function initSlider() {
 export async function updateMapZoom() {
   const stateFips = window.locationManager.getStateFips();
   const countyFips = window.locationManager.getCountyFips();
-
-  // clear highlighted class from all counties
-  d3.selectAll(".map_county")
-    .attr("class", "map_county");
 
   if (countyFips) {
     const countyOutline = await window.dataManager.getCountyOutline();
