@@ -154,6 +154,9 @@ class DataManager {
   }
 
   async getFullName(fips) {
+    if (!fips) {
+      return {};
+    }
     const fipsData = await this.fips;
     return {
      county: fipsData[fips].county,

@@ -91,7 +91,20 @@ function hideLabel(d) {
     .attr("class", "circle");
 }
 
+
+async function updateLocationLabel() {
+  const fips = window.locationManager.getFips();
+  const fipsLabels = await window.dataManager.getFullName(fips);
+  let label = "the United States";
+  if (fipsLabels.state) {
+    label = fipsLabels.state;
+  }
+  document.getElementById("js_line_chart_location").innerHTML = label;
+}
+
 export async function updateLineChart() {
+  updateLocationLabel();
+
   const data = window.locationManager.isCountryView() ?
     await window.dataManager.getNewCasesAllStates() :
     await window.dataManager.getNewCasesGivenState(window.locationManager.getStateFips());

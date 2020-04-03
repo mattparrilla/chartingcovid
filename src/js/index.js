@@ -7,19 +7,6 @@ import initLocationManager from './locationManager';
 import initLineChart, { updateLineChart } from './lineChart';
 import router from './router';
 
-async function updateLabels(fips) {
-  const fipsLabels = await window.dataManager.getFullName(fips);
-  let label = "the United States";
-  if (fipsLabels.county) {
-    label = `${fipsLabels.county}, ${fipsLabels.state}`;
-  } else if (fipsLabels.state) {
-    label = fipsLabels.state;
-  }
-  document.querySelectorAll(".js_location_name").forEach(span => {
-    span.innerHTML = label;
-  });
-}
-
 // TODO: handle 404s (replace alerts)
 window.addEventListener("DOMContentLoaded", () => {
   initDataManager();
@@ -33,7 +20,6 @@ window.addEventListener("DOMContentLoaded", () => {
   router
     .add('', () => {
       window.locationManager.updateFips();
-      updateLabels();
       updateSelectors();
       updateMapZoom();
       updateLineChart();
@@ -44,7 +30,6 @@ window.addEventListener("DOMContentLoaded", () => {
     .add('state/(:any)', async (state) => {
       const fips = await window.dataManager.getFipsForStateUrl(state);
       window.locationManager.updateFips(fips);
-      updateLabels(window.locationManager.getStateFips());
       updateSelectors();
       updateMapZoom();
       updateLineChart();
@@ -56,7 +41,6 @@ window.addEventListener("DOMContentLoaded", () => {
       const countyFips = await window.dataManager.getFipsForCountyUrl(county, state);
       const stateFips = await window.dataManager.getFipsForStateUrl(state);
       window.locationManager.updateFips(stateFips, countyFips);
-      updateLabels(window.locationManager.getCountyFips());
       updateSelectors();
       updateMapZoom();
       updateLineChart();

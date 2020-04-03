@@ -58,7 +58,21 @@ function getChartX(data) {
     .padding(0.1);
 }
 
+async function updateLocationLabel() {
+  const fips = window.locationManager.getFips();
+  const fipsLabels = await window.dataManager.getFullName(fips);
+  let label = "the United States";
+  if (fipsLabels.county) {
+    label = `${fipsLabels.county}, ${fipsLabels.state}`;
+  } else if (fipsLabels.state) {
+    label = fipsLabels.state;
+  }
+  document.getElementById("js_trend_chart_location").innerHTML = label;
+}
+
 export async function updateTrendChart() {
+  updateLocationLabel();
+
   const data = await getTrendChartData();
   const svg = d3.select("#js_trend_chart svg");
   const { metric, scale } = document
