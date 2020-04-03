@@ -125,13 +125,7 @@ export default async function initTrendChart() {
   svg.append("g")
     .attr("class", "y axis")
     .attr("transform", `translate(${width - margin.right},0)`)
-    .call(d3.axisRight(y))
-    .append("text")
-      .attr("x", -margin.left)
-      .attr("y", 10)
-      .attr("fill", "currentColor")
-      .attr("text-anchor", "start")
-      .text(chartData.y);
+    .call(d3.axisRight(y));
 
   svg.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
