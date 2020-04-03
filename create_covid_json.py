@@ -386,9 +386,9 @@ def generate_json(counties_file: str, states_file: str, output_file: str,
     state_data = generate_covid_data(
         state_csv, empty_data, growth_metric_days, output_fips_first,
         is_state_file=True)
-    state_and_county_csv = read_data_from_csv(counties_file)
+    county_csv = read_data_from_csv(counties_file)
     state_and_county_data = generate_covid_data(
-        state_and_county_csv, state_data, growth_metric_days, output_fips_first)
+        county_csv, state_data, growth_metric_days, output_fips_first)
 
     with open(output_file, "w") as output:
         json.dump(state_and_county_data, output)
