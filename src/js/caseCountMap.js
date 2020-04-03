@@ -78,7 +78,7 @@ function drawMap(countyOutline) {
     .data(topojson.feature(countyOutline, countyOutline.objects.counties).features)
     .join("path")
       .attr("class", "map_county")
-      .attr("id", d => `fips_${d.id}`)
+      .attr("id", d => `js_fips_${d.id}`)
       .attr("d", path)
       .attr("stroke", "white")
       .attr("stroke-width", 0.5)
@@ -92,7 +92,7 @@ function drawMap(countyOutline) {
     .data(topojson.feature(countyOutline, countyOutline.objects.states).features)
     .join("path")
       .attr("pointer-events", "visible")
-      .attr("id", d => `fips_${d.id}`)
+      .attr("id", d => `js_fips_${d.id}`)
       .on("click", zoomToStateClick)
       .attr("d", path);
 
@@ -146,13 +146,13 @@ export async function updateMapZoom() {
     const countyOutline = await window.dataManager.getCountyOutline();
     const counties = topojson.feature(countyOutline, countyOutline.objects.counties).features;
     const selectedFeature = counties.find(({ id }) => id === countyFips);
-    const selectedNode = d3.select(`#fips_${countyFips}`);
+    const selectedNode = d3.select(`#js_fips_${countyFips}`);
     zoomToCounty(selectedFeature, selectedNode);
   } else if (stateFips) {
     const countyOutline = await window.dataManager.getCountyOutline();
     const states = topojson.feature(countyOutline, countyOutline.objects.states).features;
     const selectedFeature = states.find(({ id }) => id === stateFips);
-    const selectedNode = d3.select(`#fips_${stateFips}`);
+    const selectedNode = d3.select(`#js_fips_${stateFips}`);
     zoomToState(selectedFeature, selectedNode);
   } else {
     reset();
