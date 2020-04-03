@@ -113,7 +113,6 @@ export default async function initTrendChart() {
     .attr("viewBox", [0, 0, width, height]);
 
   svg.append("g")
-      .attr("fill", "steelblue")
     .selectAll("rect")
     .data(chartData)
     .join("rect")

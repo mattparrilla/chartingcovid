@@ -7,6 +7,9 @@
   min-height: 5rem;
   svg {
     border: 1px solid palette.$neutral_7;
+    rect {
+      fill: palette.$primary_6;
+    }
   }
   h2 {
     margin-bottom: 0;
