@@ -19,15 +19,22 @@ export async function updateLineChart() {
     await window.dataManager.getNewCasesAllStates() :
     await window.dataManager.getNewCasesGivenState(window.locationManager.getStateFips());
 
+  // TODO: handle no data for state
+
   // Remove existing elements
   svg.selectAll("g .circle").remove();
   svg.selectAll("g .line").remove();
   svg.selectAll("g .label").remove();
 
-  // if we have a state, get state data
-  // if we have a county, make sure its highlighted
-  // TODO decide highlights
-  const highlights = [];
+  // Highlight
+  const entriesByLength = Object.entries(data).sort((a, b) => (
+    a[1].length > b[1].length ? 1 : -1
+  ));
+  const highlights = entriesByLength
+    .slice(Math.max(entriesByLength.length - 5, 1))
+    .map(([fips]) => fips);
+
+  // TODO: Highlight seleted county if in map
 
   svg.append("g")
     .selectAll(".circle")
@@ -53,7 +60,8 @@ export async function updateLineChart() {
   const highlightLabels = await Promise.all(highlights.map(async d => (
     window.dataManager.getNameByFips(d))));
 
-  svg.selectAll(".label")
+  svg.append("g")
+    .selectAll(".label")
     .data(highlights)
     .enter()
     .append("text")
@@ -86,18 +94,6 @@ export default async function initLineChart() {
   // show 10 days beyond the present
   x.domain([0, xMax + 10]);
   y.domain([0, yMax]);
-
-
-  svg.append("g")
-    .selectAll(".circle")
-    .data([])
-    .enter()
-    .append("circle")
-      .attr("class", d => `${highlights.includes(d) ? "highlight" : d} circle`)
-      .attr("r", 4)
-      .attr("cx", d => x(data[d].length - 1))
-      // TODO: avoid conflicts
-      .attr("cy", d => y(data[d][data[d].length - 1]));
 
   // Add the X Axis
   svg.append("g")
