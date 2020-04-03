@@ -1,10 +1,14 @@
 import * as d3 from "d3";
+import { margin as trendChartMargin } from './trendChart';
 
 // set the dimensions and margins of the graph
-const margin = { top: 20, right: 50, bottom: 80, left: 70 };
+const margin = {
+  ...trendChartMargin,
+  bottom: 120
+};
 const width = 1000 - margin.left - margin.right;
-const height = 550 - margin.top - margin.bottom;
-const x = d3.scaleLinear().range([margin.left, width]);
+const height = 700 - margin.top - margin.bottom;
+const x = d3.scaleLinear().range([margin.left, width - margin.right]);
 const y = d3.scaleSymlog().range([height - margin.bottom, margin.top]);
 const svg = d3.select("#js_days_since_chart")
   .append("svg")
@@ -223,7 +227,7 @@ export default async function initLineChart() {
 
   // x axis label
   svg.append("text")
-    .attr("transform", `translate(${(width / 2)}, ${height - 20})`)
+    .attr("transform", `translate(${(width / 2)}, ${height - 50})`)
     .style("text-anchor", "middle")
     .text("Days Since 50 Confirmed Cases");
 }

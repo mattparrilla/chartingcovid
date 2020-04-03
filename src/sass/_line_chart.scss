@@ -2,6 +2,10 @@
 
 #js_days_since_chart {
   margin-bottom: 5rem;
+
+  svg {
+    border: 1px solid palette.$neutral_7;
+  }
 }
 
 .line {

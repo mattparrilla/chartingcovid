@@ -152,6 +152,14 @@ class DataManager {
     });
     return stateCases;
   }
+
+  async getFullName(fips) {
+    const fipsData = await this.fips;
+    return {
+     county: fipsData[fips].county,
+     state: fipsData[fips].state
+    };
+  }
 }
 
 export default async function initDataManager() {
