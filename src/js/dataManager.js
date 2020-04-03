@@ -31,6 +31,14 @@ class DataManager {
     ));
   }
 
+  async getUrlForFips(fips) {
+    const fipsData = await this.fips;
+    const county = urlifyName(fipsData[fips].county);
+    const state = urlifyName(fipsData[fips].state);
+
+    return county ? `/state/${state}/county/${county}` : `/state/${state}`;
+  }
+
   async getFipsForCountyUrl(urlCountyName, urlStateName) {
     const fips = await this.fips;
     return Object.keys(fips).find(item => (
