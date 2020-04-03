@@ -20,11 +20,9 @@ function sortRowsByColumn(sortColumn) {
   const floatColumns = ["cases_per_capita", "moving_avg"];
 
   return function sortRows(a, b) {
-    if (a[sortColumn] == null) {
+    // Always push null to the bottom
+    if (a[sortColumn] == null || b[sortColumn] == null) {
       return 1;
-    }
-    if (b[sortColumn] == null) {
-      return -1;
     }
     if (intColumns.includes(sortColumn)) {
       return parseInt(b[sortColumn], 10) - parseInt(a[sortColumn], 10);
@@ -63,9 +61,11 @@ function updateTableMarkup() {
       <td class="number">${(row.cases_per_capita || "").toLocaleString(undefined, {
         minimumFractionDigits: 5
       })}</td>
-      <td class="number">${(row.moving_avg || "").toLocaleString(undefined, {
-        style: "percent",
+      <td class="number">${(row.growth_factor || "").toLocaleString(undefined, {
         minimumFractionDigits: 2,
+      })}</td>
+      <td class="number">${(row.doubling_time || "").toLocaleString(undefined, {
+        minimumFractionDigits: 1,
       })}</td>
     </tr>`).join('');
 }

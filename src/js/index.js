@@ -4,6 +4,7 @@ import initStateSelector, { updateSelectors } from './location';
 import initCaseCountMap from "./caseCountMap";
 import initDataManager from './dataManager';
 import initLocationManager from './locationManager';
+import initLineChart, { updateLineChart } from './lineChart';
 import router from './router';
 
 // TODO: handle 404s (replace alerts)
@@ -14,6 +15,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initCaseCountMap();
   initTrendChart();
   initDataTable();
+  initLineChart();
 
 
   router
@@ -22,6 +24,7 @@ window.addEventListener("DOMContentLoaded", () => {
       updateSelectors();
       updateTrendChart();
       updateTable();
+      updateLineChart();
     })
 
     .add('state/(:any)', async (state) => {
@@ -36,6 +39,7 @@ window.addEventListener("DOMContentLoaded", () => {
       updateSelectors();
       updateTrendChart();
       updateTable();
+      updateLineChart();
     })
 
     .add('state/(:any)/county/(:any)', async (state, county) => {
@@ -51,6 +55,7 @@ window.addEventListener("DOMContentLoaded", () => {
       updateSelectors();
       updateTrendChart();
       updateTable();
+      updateLineChart();
     })
     .addUriListener()
     .navigateTo(window.location.pathname);

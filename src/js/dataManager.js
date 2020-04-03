@@ -2,10 +2,11 @@ import { json } from 'd3';
 import { urlifyName } from './utilities';
 
 class DataManager {
-  constructor(fips, cases, countyOutline) {
+  constructor(fips, cases, countyOutline, newCases) {
     this.fips = fips;
     this.cases = cases;
     this.countyOutline = countyOutline;
+    this.newCases = newCases;
   }
 
   async getFipsCountyName(fips) {
@@ -16,6 +17,11 @@ class DataManager {
   async getFipsStateName(fips) {
     const fipsData = await this.fips;
     return fipsData[fips].state;
+  }
+
+  async getNameByFips(fips) {
+    const fipsData = await this.fips;
+    return fipsData[fips].county || fipsData[fips].state;
   }
 
   async getFipsForStateUrl(urlStateName) {
@@ -110,12 +116,38 @@ class DataManager {
     const fipsData = await this.fips;
     return fipsData[fips].population;
   }
+
+  async getNewCasesGivenState(stateFips) {
+    const fipsData = await this.fips;
+    const newCasesData = await this.newCases;
+    const state = await this.getFipsStateName(stateFips);
+    const cases = {};
+    Object.entries(fipsData).forEach(([fips, fipsInfo]) => {
+      if (fipsInfo.county && fipsInfo.state === state && newCasesData[fips]) {
+        cases[fips] = newCasesData[fips];
+      }
+    });
+    return cases;
+  }
+
+  async getNewCasesAllStates() {
+    const fipsData = await this.fips;
+    const newCasesData = await this.newCases;
+    const stateCases = {};
+    Object.entries(fipsData).forEach(([fips, fipsInfo]) => {
+      if (fipsInfo.county === "") {
+        stateCases[fips] = newCasesData[fips];
+      }
+    });
+    return stateCases;
+  }
 }
 
 export default async function initDataManager() {
   window.dataManager = new DataManager(
     json("/data/fips_data.json"),
-    json("/data/covid_cases_by_date.json"),
-    json("/data/counties-albers-10m2.json")
+    json("/data/covid_data.json"),
+    json("/data/counties-albers-10m2.json"),
+    json("/data/new_case_data.json")
   );
 }

@@ -3,6 +3,7 @@
 @use "trend_chart";
 @use "variables";
 @use "choropleth";
+@use "line_chart";
 
 html {
   font-family: open-sans, sans-serif;
@@ -37,4 +38,8 @@ h1 {
 // Only display if state is selected
 #js_select_county {
   display: none;
+}
+
+svg text {
+  font-size: 1.8rem;
 }
