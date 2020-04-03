@@ -5,23 +5,19 @@
   margin-bottom: 5rem;
   position: relative;
   min-height: 5rem;
+  svg {
+    border: 1px solid palette.$neutral_7;
+  }
+  h2 {
+    margin-bottom: 0;
+  }
 }
 
-.chart_info {
-  position: absolute;
-  top: 0;
-}
 
-#js_chart_metric {
-  font-size: 3.2rem;
-  font-weight: 600;
-}
-
-#js_chart_scale_selector,
-#js_chart_metric_selector {
+#js_chart_scale_selector {
   font-size: 1.6rem;
   color: palette.$neutral_3;
-  margin-bottom: 0.7rem;
+  margin-bottom: 2rem;
 
   span {
     margin-left: 1rem;
