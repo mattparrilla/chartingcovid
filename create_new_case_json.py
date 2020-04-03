@@ -79,9 +79,17 @@ def generate_new_case_data(filename: str, minimum_case_count: int,
             # to record chronological for this data source.
             increases.reverse()
 
-            # Only add FIPS with to output data
             if len(increases):
-                output_data[fips] = increases
+                # We'd like to remove daily counts at the front (latest) end
+                # of our list if there has been no increase recorded. These
+                # will often mean just no data was recorded and will make the
+                # graph look odd.
+                latest_increase = 0
+                for i in range(len(increases)):
+                    if i > 0:
+                        latest_increase = i
+                        break
+                output_data[fips] = increases[latest_increase:]
 
     return output_data
 
