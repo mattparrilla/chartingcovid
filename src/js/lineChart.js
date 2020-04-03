@@ -42,12 +42,14 @@ function generateHighlights(data) {
 
   const categories = [highestPeak, longestDuration, fastestRisers];
   let i = 0;
-  let highlights = [];
-  while (highlights.length < 5) {
+  const highlights = [];
+  while (highlights.length < 5 && i < 5) {
     categories.forEach(category => {
-      const fips = category[i].fips;
-      if (!highlights.includes(fips)) {
-        highlights.push(fips);
+      if (category[i] && category[i].fips) {
+        const fips = category[i].fips;
+        if (!highlights.includes(fips)) {
+          highlights.push(fips);
+        }
       }
     });
     i++;
@@ -94,7 +96,7 @@ export async function updateLineChart() {
     await window.dataManager.getNewCasesAllStates() :
     await window.dataManager.getNewCasesGivenState(window.locationManager.getStateFips());
 
-  // TODO: handle no data for state
+  const countyFips = window.locationManager.getCountyFips();
 
   // Remove existing elements
   svg.selectAll(".new_cases_line").remove();
@@ -151,7 +153,7 @@ export async function updateLineChart() {
       .attr("y", d => y(data[d][data[d].length - 1]) + 5)
       .attr("id", d => `js_new_cases_${d}`)
       .text(d => placeLabels[d])
-      .style("display", "none");
+      .style("display", (d) => d === countyFips ? "block" : "none");
 
   const legendItems = svg.select(".legend")
     .selectAll(".legend_item")

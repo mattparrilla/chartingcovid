@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import router from './router';
 
-const maxZoom = 20;
+const maxZoom = 8;
 const path = d3.geoPath();
 const width = 975;
 const height = 610;
@@ -17,9 +17,8 @@ const zoom = d3.zoom()
       g.attr("transform", transform);
       g.attr("stroke-width", 1 / transform.k);
     });
+
 let active = d3.select(null);
-
-
 function reset() {
   active = d3.select(null);
   svg.transition().duration(750).call(
@@ -31,10 +30,10 @@ function reset() {
   svg.selectAll(".js_state_bounds")
       .attr("pointer-events", "visible");
 
-  // clear highlighted class from all counties
-  svg.selectAll(".map_county")
-    .attr("class", "map_county")
-    .style("stroke", "white");
+  // // clear highlighted class from all counties
+  // svg.selectAll(".map_county")
+  //   .attr("class", "map_county")
+  //   .style("stroke", "white");
 }
 
 function zoomToState(d, node) {
@@ -80,7 +79,7 @@ function zoomToCounty(d, node) {
   const [[x0, y0], [x1, y1]] = path.bounds(d);
   node.raise();
   node.attr("class", "map_county highlight_county");
-  node.style("stroke", "#409142");
+  node.style("stroke", "#1DB954");
   svg.transition().duration(750).call(
     zoom.transform,
     d3.zoomIdentity
@@ -106,7 +105,7 @@ function countyMouseOver() {
   const county = d3.select(this);
   // don't change outline of this is our selected county
   if (!county.attr("class").includes("highlight_county")) {
-    county.style("stroke", "red");
+    county.style("stroke", "#1DB954");
     county.raise();
   }
 }
