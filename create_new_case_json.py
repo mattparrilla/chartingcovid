@@ -78,7 +78,10 @@ def generate_new_case_data(filename: str, minimum_case_count: int,
             # The increases are currently reverse chronological, but we want
             # to record chronological for this data source.
             increases.reverse()
-            output_data[fips] = increases
+
+            # Only add FIPS with to output data
+            if len(increases):
+                output_data[fips] = increases
 
     return output_data
 
