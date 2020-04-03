@@ -15,15 +15,8 @@
   width: 100%;
 }
 
-#js_map_legend {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  svg {
-    background: palette.$neutral_9;
-  }
-
-  rect {
-    stroke: palette.$neutral_3;
-  }
+#js_map_legend > rect {
+  fill: palette.$neutral_9;
+  fill-opacity: 0.95;
+  stroke: palette.$neutral_8;
 }

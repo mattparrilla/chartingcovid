@@ -134,12 +134,15 @@ async function drawLegend() {
     .domain([-1, color.range().length - 1])
     .rangeRound([0, ticks * tickSize]);
 
-  const legend = d3.select("#js_map_legend")
-    .append("svg")
+  const legend = svg.append("g")
+    .attr("id", "js_map_legend")
     .attr("height", legendHeight)
     .attr("width", legendWidth)
-    .style("overflow", "visible")
-    .attr("viewBox", [0, 0, legendWidth, legendHeight]);
+    .attr("transform", `translate(${width - legendWidth - legendMargin}, ${legendMargin})`);
+
+  legend.append("rect")
+    .attr("height", legendHeight)
+    .attr("width", legendWidth);
 
   legend.append("g")
     .selectAll("rect")
