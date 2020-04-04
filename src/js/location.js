@@ -23,6 +23,7 @@ export async function updateSelectors() {
   const countyFips = window.locationManager.getCountyFips();
   const stateSelector = document.getElementById("js_select_state");
   const countySelector = document.getElementById("js_select_county");
+  const homeLink = document.getElementById("home");
   countySelector.value = "";
 
   // if we have a state selected, clear existing county options and populate
@@ -34,10 +35,21 @@ export async function updateSelectors() {
     counties
       .sort(alphabeticalSortByFips("county"))
       .forEach(populateSelector(countySelector, "county", countyFips));
+    homeLink.classList.remove("active");
+    if (countyFips) {
+      stateSelector.classList.remove("active");
+      countySelector.classList.add("active");
+    } else {
+      countySelector.classList.remove("active");
+      stateSelector.classList.add("active");
+    }
   } else {
     stateSelector.value = "";
     countySelector.value = "";
     countySelector.style.display = "none";
+    homeLink.classList.add("active");
+    stateSelector.classList.remove("active");
+    countySelector.classList.remove("active");
   }
 }
 

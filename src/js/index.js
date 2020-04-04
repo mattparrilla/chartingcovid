@@ -6,6 +6,7 @@ import initDataManager from './dataManager';
 import initLocationManager from './locationManager';
 import initLineChart, { updateLineChart } from './lineChart';
 import router from './router';
+import "regenerator-runtime/runtime";
 
 // TODO: handle 404s (replace alerts)
 window.addEventListener("DOMContentLoaded", () => {

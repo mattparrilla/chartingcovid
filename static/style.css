@@ -69,6 +69,7 @@ th {
 
 td.number {
   text-align: right;
+  font-family: monospace;
 }
 
 .table td,
@@ -164,6 +165,14 @@ tr.highlight {
   fill: #f7f7f7;
   fill-opacity: 0.95;
   stroke: #e0e0e0;
+}
+
+#js_map_legend text {
+  font-size: 1.4rem;
+}
+
+.legend_color {
+  stroke: #cfcfcf;
 }
 
 #js_days_since_chart {
@@ -338,6 +347,32 @@ h2 {
   color: #3b3b3b;
 }
 
+#js_home, select {
+  margin-bottom: 1em;
+  padding: 0.25em;
+  border: 0;
+  border-bottom: 2px solid currentcolor;
+  font-weight: bold;
+  border-radius: 0;
+  font-family: proxima-nova-condensed, sans-serif;
+  font-size: 1.8rem;
+  min-width: 15rem;
+}
+
+a#js_home {
+  text-decoration: none;
+  color: black;
+  display: inline-block;
+}
+
+select:focus, select:active {
+  outline: 0;
+  border-bottom-color: red;
+}
+select option {
+  font-family: sans-serif;
+}
+
 .basic_button {
   border: 0;
   padding: 1.5rem;
@@ -355,8 +390,28 @@ svg text {
   font-size: 1.8rem;
 }
 
+section {
+  margin-bottom: 5rem;
+}
+
 @media (max-width: 500px) {
   svg text {
     font-size: 2.4rem;
   }
+}
+p {
+  max-width: 85rem;
+}
+
+.definitions {
+  margin-bottom: 2.4rem;
+}
+.definitions h3 {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+}
+.definitions ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 0;
 }

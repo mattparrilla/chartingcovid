@@ -137,6 +137,7 @@ if __name__ == "__main__":
     if confirm == "yes" or args.bucket != "charting-covid-prod":
         for root, _, filenames in os.walk(args.directory):
             for filename in filenames:
+                print(filename)
                 file_path = os.path.join(root, filename)
                 uploaded_file = upload_file(file_path,
                                             args.destination,

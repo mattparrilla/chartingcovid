@@ -122,7 +122,7 @@ async function drawLegend() {
   const ticks = 9;
   const color = d3.scaleQuantize(extent, d3.schemeOranges[ticks]);
 
-  const legendWidth = 120;
+  const legendWidth = 105;
   const legendHeight = 220;
   const legendMargin = 10; // top, bottom, left, right
 
@@ -138,7 +138,7 @@ async function drawLegend() {
     .attr("id", "js_map_legend")
     .attr("height", legendHeight)
     .attr("width", legendWidth)
-    .attr("transform", `translate(${width - legendWidth - legendMargin}, ${legendMargin})`);
+    .attr("transform", `translate(${width - legendWidth - legendMargin}, ${height - legendMargin - legendHeight})`);
 
   legend.append("rect")
     .attr("height", legendHeight)
@@ -152,7 +152,8 @@ async function drawLegend() {
       .attr("y", (d, i) => x(i - 1) + legendMargin)
       .attr("width", tickSize)
       .attr("height", tickSize)
-      .attr("fill", d => d);
+      .style("stroke", "#fff")
+      .style("fill", d => d);
 
   const tickValues = d3.range(thresholds.length);
   const tickFormat = i => thresholdFormat(thresholds[i], i);
@@ -164,6 +165,7 @@ async function drawLegend() {
       .tickFormat(tickFormat)
       .tickSize(0)
       .tickValues(tickValues))
+      .call(el => el.select(".domain").remove())
       .call(el => el.append("text")
         .attr("x", 0)
         .attr("y", legendHeight - 20)

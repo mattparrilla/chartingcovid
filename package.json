@@ -18,19 +18,23 @@
   },
   "dependencies": {
     "@gfx/zopfli": "^1.0.14",
+    "@material/select": "^5.1.0",
     "compression-webpack-plugin": "^3.1.0",
     "css-loader": "^3.4.2",
     "d3": "^5.15.0",
     "extract-loader": "^5.0.1",
     "file-loader": "^6.0.0",
     "npm": "^6.13.7",
+    "regenerator-runtime": "^0.13.5",
     "sass-loader": "^8.0.2",
     "topojson-client": "^3.1.0",
     "vanilla-router": "^1.2.8"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
+    "@babel/plugin-transform-runtime": "^7.9.0",
     "@babel/preset-env": "^7.8.7",
+    "@babel/runtime": "^7.9.2",
     "autoprefixer": "^9.7.5",
     "babel-loader": "^8.0.6",
     "postcss-loader": "^3.0.0",
@@ -47,5 +51,6 @@
   "bugs": {
     "url": "https://github.com/mattparrilla/chartingcovid/issues"
   },
-  "homepage": "https://chartingcovid"
+  "homepage": "https://chartingcovid",
+  "browserslist": "> 0.25%, not dead"
 }

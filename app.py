@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask_frozen import Freezer
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, url_for
 
 
 app = Flask(__name__)
@@ -18,12 +18,15 @@ url_prefix = "https://chartingcovid.com"
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def index(path):
-    description = "Making COVID-19 trends understandable using clear charts and maps."
-    title = "Charting the COVID-19 Coronavirus"
+    description = "The story of COVID-19 is a story of trends. We've been told to practice social distancing in order to flatten the curve, but how are we doing?"
+    title = "Coronavirus In The Counties"
+    social_img = url_for('static', filename="coronavirus_county_map.png")
+
     return render_template("index.html",
         url_prefix=url_prefix,
         description=description,
         timestamp=datetime.utcnow().timestamp(),
+        social_img=social_img,
         title=title)
 
 
@@ -32,6 +35,23 @@ def data(json_file):
     response = send_from_directory('data', filename=json_file)
     response.headers["Content-Type"] = "application/json"
     return response
+
+
+@freezer.register_generator
+def index():
+    yield {"path": "index.html"}
+
+
+@freezer.register_generator
+def data():
+    json_files = [
+        "counties-albers-10m2.json",
+        "fips_data.json",
+        "new_case_data.json",
+        "covid_data.json"
+    ]
+    for data in json_files:
+        yield {"json_file": data}
 
 
 if __name__ == "__main__":
