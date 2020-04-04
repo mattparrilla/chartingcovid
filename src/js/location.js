@@ -23,7 +23,7 @@ export async function updateSelectors() {
   const countyFips = window.locationManager.getCountyFips();
   const stateSelector = document.getElementById("js_select_state");
   const countySelector = document.getElementById("js_select_county");
-  const homeLink = document.getElementById("home");
+  const homeLink = document.getElementById("js_home");
   countySelector.value = "";
 
   // if we have a state selected, clear existing county options and populate
@@ -36,6 +36,11 @@ export async function updateSelectors() {
       .sort(alphabeticalSortByFips("county"))
       .forEach(populateSelector(countySelector, "county", countyFips));
     homeLink.classList.remove("active");
+
+    // show NYC disclaimer if NY is selected
+    document.getElementById("js_ny_disclaimer").style.display =
+      stateFips == 36 ? "block" : "none";
+
     if (countyFips) {
       stateSelector.classList.remove("active");
       countySelector.classList.add("active");

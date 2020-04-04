@@ -175,6 +175,19 @@ async function drawLegend() {
         .text("Cases"));
 }
 
+function mergeNYCCounties(countyOutline) {
+  const NYCCounties = ["36085", "36081", "36061", "36047", "36005"];
+  const newYorkCity = topojson.mergeArcs(countyOutline,
+    countyOutline.objects.counties.geometries.filter(d => NYCCounties.includes(d.id)));
+  newYorkCity.id = "-10003";
+  countyOutline.objects.counties.geometries.push(newYorkCity);
+
+  // Remove NYC counties from county geometries
+  countyOutline.objects.counties.geometries.filter(d => !NYCCounties.includes(d.id));
+
+  return topojson.feature(countyOutline, countyOutline.objects.counties).features;
+}
+
 function drawMap(countyOutline) {
   svg.on("click", reset);
 
@@ -183,10 +196,12 @@ function drawMap(countyOutline) {
     svg.call(zoom);
   }
 
+  const counties = mergeNYCCounties(countyOutline);
+
   // Draw counties
   g.append("g")
     .selectAll("path")
-    .data(topojson.feature(countyOutline, countyOutline.objects.counties).features)
+    .data(counties)
     .join("path")
       .attr("class", "map_county")
       .on("mouseover", countyMouseOver)
@@ -221,6 +236,14 @@ function drawMap(countyOutline) {
     .attr("stroke-width", 2)
     .attr("stroke-linejoin", "round")
     .attr("d", path);
+
+  // add date label in map element
+  svg.append("text")
+    .attr("id", "js_on_map_date_label")
+    .attr("x", "50%")
+    .attr("y", 30)
+    .style("text-anchor", "middle")
+    .text("");
 }
 
 async function updateMap(daysPrior = 0) {
@@ -253,7 +276,11 @@ async function updateSliderLabel(slider, daysPrior = 0) {
   const dateOptions = {month: 'long', day: 'numeric'};
   const formattedDate =
     new Intl.DateTimeFormat('un-US', dateOptions).format(date);
-  label.innerHTML = formattedDate.toString();
+  const dateString = formattedDate.toString();
+  label.innerHTML = dateString;
+
+  svg.select("#js_on_map_date_label")
+    .text(dateString);
 }
 
 async function initSlider() {
@@ -294,9 +321,8 @@ export async function updateMapZoom() {
 }
 
 export default async function initChoropleth() {
-  const countyOutline = await window.dataManager.getCountyOutline();
-  window.d3 = d3;
   const slider = document.getElementById("js_map_slider");
+  const countyOutline = await window.dataManager.getCountyOutline();
 
   initSlider();
   drawLegend();
