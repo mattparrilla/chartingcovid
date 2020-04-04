@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask_frozen import Freezer
-from flask import Flask, render_template, send_from_directory, url_for
+from flask import Flask, render_template, send_from_directory
 
 
 app = Flask(__name__)
@@ -19,8 +19,8 @@ url_prefix = "https://chartingcovid.com"
 @app.route('/<path:path>')
 def index(path):
     description = "The story of COVID-19 is a story of trends. We've been told to practice social distancing in order to flatten the curve, but how are we doing?"
-    title = "Coronavirus In The Counties"
-    social_img = url_for('static', filename="coronavirus_county_map.png")
+    title = "COVID In The Counties"
+    social_img = "{}/static/coronavirus_county_map.png".format(url_prefix)
 
     return render_template("index.html",
         url_prefix=url_prefix,
