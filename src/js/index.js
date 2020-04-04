@@ -1,7 +1,7 @@
 import initTrendChart, { updateTrendChart } from './trendChart';
 import initDataTable, { updateTable } from './dataTable';
 import initStateSelector, { updateSelectors } from './location';
-import initCaseCountMap, { updateMapZoom } from "./caseCountMap";
+import initChoropleth, { updateMapZoom } from "./choropleth";
 import initDataManager from './dataManager';
 import initLocationManager from './locationManager';
 import initLineChart, { updateLineChart } from './lineChart';
@@ -13,7 +13,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initDataManager();
   initLocationManager();
   initStateSelector();
-  initCaseCountMap();
+  initChoropleth();
   initTrendChart();
   initDataTable();
   initLineChart();

@@ -4,7 +4,7 @@
 @use "variables";
 @use "choropleth";
 @use "line_chart";
-@use "map";
+@use "location_selectors";
 
 html {
   font-family: proxima-nova, sans-serif;
@@ -19,17 +19,6 @@ body {
   max-width: 100rem;
   margin: 1rem auto 3rem;
   font-size: 1.8rem;
-}
-
-@media (max-width: 1000px) {
-  body {
-    margin: 0 10px 3rem;
-  }
-}
-
-.nav {
-  position: relative;
-  margin: 1rem 0;
 }
 
 h1 {
@@ -47,51 +36,6 @@ h2 {
   color: palette.$neutral_1;
 }
 
-#js_home, select {
-  display: inline-block;
-  margin-bottom: 0.8rem;
-  border: 0;
-  border-bottom: 2px solid currentcolor; 
-  font-weight: bold;
-  border-radius: 0;
-  font-family: proxima-nova-condensed, sans-serif;
-  font-size: 1.8rem;
-  min-width: 15rem;
-  background-color: palette.$neutral_8;
-  width: 100%;
-  &.active {
-    border-bottom-color: red;
-  }
-}
-
-#home {
-  padding-left: 0.3rem;
-}
-
-a#js_home{
-  text-decoration: none;
-  color: black;
-  padding: 0.3rem 0;
-}
-
-select {
-  padding: 0.3rem;
-  &:focus, &:active {
-    border-bottom-color: red;
-  }
-  option {
-    font-family: sans-serif;
-    font-size: 1.4rem;
-    background-color: white;
-  }
-}
-
-@media (max-width: 500px) {
-  #home, select {
-    width: 100%;
-  }
-}
-
 .basic_button {
   border: 0;
   padding: 1.5rem;
@@ -101,23 +45,12 @@ select {
   font-weight: 600;
 }
 
-// Only display if state is selected
-#js_select_county {
-  display: none;
-}
-
 svg text {
   font-size: 1.8rem;
 }
 
 section {
   margin-bottom: 5rem;
-}
-
-@media (max-width: 500px) {
-  svg text {
-    font-size: 2.4rem;
-  }
 }
 
 p {
@@ -137,3 +70,16 @@ p {
     margin-top: 0;
   }
 }
+
+@media (max-width: 1000px) {
+  body {
+    margin: 0 10px 3rem;
+  }
+}
+
+@media (max-width: 500px) {
+  svg text {
+    font-size: 2.4rem;
+  }
+}
+

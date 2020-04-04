@@ -1,0 +1,57 @@
+@use "palette";
+
+.nav {
+  position: relative;
+  margin: 1rem 0;
+}
+
+#js_home, select {
+  display: inline-block;
+  margin-bottom: 0.8rem;
+  border: 0;
+  border-bottom: 2px solid currentcolor; 
+  font-weight: bold;
+  border-radius: 0;
+  font-family: proxima-nova-condensed, sans-serif;
+  font-size: 1.8rem;
+  min-width: 15rem;
+  background-color: palette.$neutral_8;
+  &.active {
+    border-bottom-color: red;
+  }
+}
+
+
+#home {
+  padding-left: 0.3rem;
+}
+
+a#js_home{
+  text-decoration: none;
+  color: black;
+  padding: 0.4rem 0;
+}
+
+select {
+  padding: 0.3rem;
+  &:focus, &:active {
+    border-bottom-color: red;
+  }
+  option {
+    font-family: sans-serif;
+    font-size: 1.4rem;
+    background-color: white;
+  }
+}
+
+// Only display if state is selected
+#js_select_county {
+  display: none;
+}
+
+@media (max-width: 500px) {
+  #js_home, select {
+    width: 100%;
+  }
+}
+
