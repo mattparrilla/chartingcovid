@@ -31,6 +31,10 @@ def read_census_file(filename):
     with open(filename, encoding="ISO-8859-1") as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
         output_data = {}
+        # We need to create one "county" for NYC since our case data does not
+        # separate NYC into counties.
+        nyc_county_fips = ['36005', '36047', '36061', '36081', '36085']
+        nyc_population = 0
 
         # Skip the first line (the table header).
         next(reader)
@@ -54,11 +58,24 @@ def read_census_file(filename):
 
             population = int(row[POPULATION])
 
+            # Skip adding individual NYC counties since our case data doesn't
+            # distinguish.
+            if fips_code in nyc_county_fips:
+                nyc_population += population
+                continue
+
             output_data[fips_code] = {
                 "county": county_name,
                 "state": state_name,
                 "population": population
             }
+
+        # Add aggregated NYC data as a pseudo-county.
+        output_data["-10003"] = {
+            "county": "New York City",
+            "state": "New York",
+            "population": nyc_population
+        }
         return output_data
 
 
