@@ -165,7 +165,7 @@ async function drawLegend() {
       .tickFormat(tickFormat)
       .tickSize(0)
       .tickValues(tickValues))
-      .call(g => g.select(".domain").remove())
+      .call(el => el.select(".domain").remove())
       .call(el => el.append("text")
         .attr("x", 0)
         .attr("y", legendHeight - 20)
