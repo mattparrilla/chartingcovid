@@ -152,7 +152,8 @@ async function drawLegend() {
       .attr("y", (d, i) => x(i - 1) + legendMargin)
       .attr("width", tickSize)
       .attr("height", tickSize)
-      .attr("fill", d => d);
+      .style("stroke", "#fff")
+      .style("fill", d => d);
 
   const tickValues = d3.range(thresholds.length);
   const tickFormat = i => thresholdFormat(thresholds[i], i);
@@ -164,6 +165,7 @@ async function drawLegend() {
       .tickFormat(tickFormat)
       .tickSize(0)
       .tickValues(tickValues))
+      .call(g => g.select(".domain").remove())
       .call(el => el.append("text")
         .attr("x", 0)
         .attr("y", legendHeight - 20)

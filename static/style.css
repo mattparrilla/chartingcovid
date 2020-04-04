@@ -171,6 +171,10 @@ tr.highlight {
   font-size: 1.4rem;
 }
 
+.legend_color {
+  stroke: #cfcfcf;
+}
+
 #js_days_since_chart {
   margin-bottom: 5rem;
 }
