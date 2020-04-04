@@ -265,14 +265,18 @@ def record_case_counts(csv_data: list, output_data: dict,
     # Offsets of the data within the csv.
     # Example: 2020-03-28,Snohomish,Washington,53061,912,23
     DATE = 0
+    COUNTY = 1
     FIPS = 2 if is_state_file else 3
     CASES = 3 if is_state_file else 4
 
     # Skip the initial header line.
     for row in csv_data[1:]:
-        # TODO(bhold): Handle NYC and KC
+        # TODO(bhold): Handle KC
         if not row[FIPS]:
-            continue
+            if not is_state_file and row[COUNTY] == "New York City":
+                row[FIPS] = "-10003"
+            else:
+                continue
 
         cases = int(row[CASES] or 0)
         set_case_count(output_data, row[DATE], row[FIPS], cases,
