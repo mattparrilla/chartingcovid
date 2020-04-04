@@ -186,7 +186,6 @@ function mergeNYCCounties(countyOutline) {
     properties: { name: "New York City" },
     geometry: newYorkCity
   });
-  console.log(counties);
   return counties;
 }
 

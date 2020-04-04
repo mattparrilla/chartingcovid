@@ -36,6 +36,11 @@ export async function updateSelectors() {
       .sort(alphabeticalSortByFips("county"))
       .forEach(populateSelector(countySelector, "county", countyFips));
     homeLink.classList.remove("active");
+
+    // show NYC disclaimer if NY is selected
+    document.getElementById("js_ny_disclaimer").style.display =
+      stateFips == 36 ? "block" : "none";
+
     if (countyFips) {
       stateSelector.classList.remove("active");
       countySelector.classList.add("active");
