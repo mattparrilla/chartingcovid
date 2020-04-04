@@ -37,5 +37,22 @@ def data(json_file):
     return response
 
 
+@freezer.register_generator
+def index():
+    yield {"path": "index.html"}
+
+
+@freezer.register_generator
+def data():
+    json_files = [
+        "counties-albers-10m2.json",
+        "fips_data.json",
+        "new_case_data.json",
+        "covid_data.json"
+    ]
+    for data in json_files:
+        yield {"json_file": data}
+
+
 if __name__ == "__main__":
     freezer.freeze()
