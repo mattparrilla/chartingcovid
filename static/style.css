@@ -347,6 +347,32 @@ h2 {
   color: #3b3b3b;
 }
 
+#js_home, select {
+  margin-bottom: 1em;
+  padding: 0.25em;
+  border: 0;
+  border-bottom: 2px solid currentcolor;
+  font-weight: bold;
+  border-radius: 0;
+  font-family: proxima-nova-condensed, sans-serif;
+  font-size: 1.8rem;
+  min-width: 15rem;
+}
+
+a#js_home {
+  text-decoration: none;
+  color: black;
+  display: inline-block;
+}
+
+select:focus, select:active {
+  outline: 0;
+  border-bottom-color: red;
+}
+select option {
+  font-family: sans-serif;
+}
+
 .basic_button {
   border: 0;
   padding: 1.5rem;

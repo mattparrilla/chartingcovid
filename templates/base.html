@@ -7,15 +7,13 @@
   <meta name="author" content="@mattparrilla and @BrianHoldefehr">
   <meta name="description" content="{{ description }}"
 
-  <!-- Social Media Tags -->
   <meta property="og:title" content="{{ title }}">
   <meta property="og:description" content="{{ description }}">
   <meta property="og:url" content="{{ url_prefix }}{{ url }}">
   <meta property="fb:app_id" content="1189898324735691">
   <meta property="og:type" content="website">
 
-  {# TODO: add images #}
-  <meta property="og:image" content="{{ social_img }}"
+  <meta property="og:image" content="{{ social_img }}">
   <meta name="twitter:image" content="{{ social_img }}">
 
   <meta name="twitter:title" content="{{ title }}">
@@ -25,7 +23,7 @@
 
   <link rel="stylesheet" href="https://use.typekit.net/jiu1txb.css">
 
-  <link href="{{ url_for('static', filename='style.css') }}?{{ timestamp }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}?{{ timestamp }}" rel="stylesheet">
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}?{{ timestamp }}">
 
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -41,6 +39,6 @@
 <body>
   {% block content %}
   {% endblock %}
-  <script src="{{ url_for('static', filename='index.js') }}?{{ timestamp }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}?{{ timestamp }}"></script>
 </body>
 </html>

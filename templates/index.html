@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div>
-    <a id="js_home" href="/">United States</a>
-    <select name="state" id="js_select_state">
+  <div class="nav">
+    <a id="js_home" href="/"><span id="home">United States</span></a>
+    <select class="select_style" name="state" id="js_select_state">
       <option value="">Choose State</option>
     </select>
-    <select name="county" id="js_select_county">
+    <select class="select_style" name="county" id="js_select_county">
       <option value="">Choose County</option>
     </select>
   </div>
