@@ -10,7 +10,7 @@ const width = 1000 - margin.left - margin.right;
 const height = 700 - margin.top - margin.bottom;
 const x = d3.scaleLinear().range([margin.left, width - margin.right]);
 const y = d3.scaleSymlog().range([height - margin.bottom, margin.top]);
-const svg = d3.select("#js_days_since_chart")
+const svg = d3.select("#js_line_chart")
   .append("svg")
   .attr("viewBox", [0, 0, width, height]);
 const line = d3.line()
@@ -167,6 +167,13 @@ export async function updateLineChart() {
       .attr("id", d => `js_new_cases_${d}`)
       .text(d => placeLabels[d])
       .style("display", (d) => d === countyFips ? "block" : "none");
+
+  // pull highlights on top of other lines
+  newCasesLine.each((d) => {
+    if (highlights.includes(d)) {
+      d3.select(`.line_${d}`).raise();
+    }
+  });
 
   const legendItems = svg.select(".legend")
     .selectAll(".legend_item")

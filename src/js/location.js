@@ -23,7 +23,7 @@ export async function updateSelectors() {
   const countyFips = window.locationManager.getCountyFips();
   const stateSelector = document.getElementById("js_select_state");
   const countySelector = document.getElementById("js_select_county");
-  const homeLink = document.getElementById("home");
+  const homeLink = document.getElementById("js_home");
   countySelector.value = "";
 
   // if we have a state selected, clear existing county options and populate

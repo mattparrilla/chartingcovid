@@ -11,10 +11,9 @@
     </select>
   </div>
   <h1>Coronavirus in the Counties</h1>
-  <p>The story of COVID-19 is a story of trends. We've been told to practice
-     social distancing in order to flatten the curve, but how are we doing?</p>
+  <p>We are all dependent on everyone in our communities to do everything possible to avoid catching and spreading COVID-19. Here, we attempt to visualize how well the places we all live are doing at preventing the virus from spreading.</p>
   {% include "choropleth.html" %}
-  {% include "days_since_chart.html" %}
+  {% include "line_chart.html" %}
   {% include "trend_chart.html" %}
 
   <div class="definitions">
@@ -52,10 +51,6 @@
       that it will take for the number of cases to double at the current growth rate.</p>
     <p>The <em>growth rate</em> used to calculate doubling time is the exponential growth rate (as opposed to the <em>growth factor</em>
       mentioned above).</p>
-  </section>
-  <section>
-    <h2>Who Made This</h2>
-    <p>This website was made by <a href="https://twitter.com/mattparrilla">Matt Parrilla</a> and <a href="https://twitter.com/BrianHoldefehr">Brian Holdefehr</a>. We're a couple of software guys who wanted to get a better idea for what was going on around us.</p>
   </section>
   <section>
     <h2>Who Made This</h2>

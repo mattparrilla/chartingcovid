@@ -1,8 +1,6 @@
 @use "palette";
 
-#js_days_since_chart {
-  margin-bottom: 5rem;
-
+#js_line_chart {
   svg {
     border: 1px solid palette.$neutral_7;
   }
