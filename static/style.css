@@ -69,6 +69,7 @@ th {
 
 td.number {
   text-align: right;
+  font-family: monospace;
 }
 
 .table td,
@@ -164,6 +165,10 @@ tr.highlight {
   fill: #f7f7f7;
   fill-opacity: 0.95;
   stroke: #e0e0e0;
+}
+
+#js_map_legend text {
+  font-size: 1.4rem;
 }
 
 #js_days_since_chart {
@@ -355,8 +360,28 @@ svg text {
   font-size: 1.8rem;
 }
 
+section {
+  margin-bottom: 5rem;
+}
+
 @media (max-width: 500px) {
   svg text {
     font-size: 2.4rem;
   }
+}
+p {
+  max-width: 85rem;
+}
+
+.definitions {
+  margin-bottom: 2.4rem;
+}
+.definitions h3 {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+}
+.definitions ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 0;
 }

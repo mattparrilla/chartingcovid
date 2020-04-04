@@ -122,7 +122,7 @@ async function drawLegend() {
   const ticks = 9;
   const color = d3.scaleQuantize(extent, d3.schemeOranges[ticks]);
 
-  const legendWidth = 120;
+  const legendWidth = 105;
   const legendHeight = 220;
   const legendMargin = 10; // top, bottom, left, right
 
@@ -138,7 +138,7 @@ async function drawLegend() {
     .attr("id", "js_map_legend")
     .attr("height", legendHeight)
     .attr("width", legendWidth)
-    .attr("transform", `translate(${width - legendWidth - legendMargin}, ${legendMargin})`);
+    .attr("transform", `translate(${width - legendWidth - legendMargin}, ${height - legendMargin - legendHeight})`);
 
   legend.append("rect")
     .attr("height", legendHeight)

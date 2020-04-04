@@ -16,9 +16,44 @@
   {% include "choropleth.html" %}
   {% include "days_since_chart.html" %}
   {% include "trend_chart.html" %}
+
+  <div class="definitions">
+    <h3>Data Definitions</h3>
+    <ul>
+      <li><strong>Growth Factor</strong> - Ratio of new cases from one day to the next</li>
+      <li><strong>Doubling Time</strong> - Number of days for case count to double at current rate</li>
+    </ul>
+  </div>
+
   {% include "table.html" %}
-  <h2>Data Source</h2>
-  <p>We're using the <a href="https://github.com/nytimes/covid-19-data">New York Times county-level data</a> for reporting this data. Thanks to the Times for making this information publicly available.</p>
-  <h2>Who Made This</h2>
-  <p>This website was made by <a href="https://twitter.com/mattparrilla">Matt Parrilla</a> and <a href="https://twitter.com/BrianHoldefehr">Brian Holdefehr</a>. We are neither epidemiologists nor statisticians.</p>
+  <section>
+    <h2>Data Source</h2>
+    <p>We're using the <a href="https://github.com/nytimes/covid-19-data">New York Times county-level data</a> for reporting this data. Thanks to the Times for making this information publicly available.</p>
+  </section>
+  <section>
+    <h2>Data Methods</h2>
+    <p>Our code is publicly available for review: <a href="https://github.com/mattparrilla/chartingcovid">https://github.com/mattparrilla/chartingcovid</a>.</p>
+    <h3>Modifications</h3>
+    <p>We tried to keep the data as close to the source as we could, however across the dataset, many counties had entries
+      erroneously reporting the same case or a decreasing case count for a given date. This is a <a href="https://github.com/nytimes/covid-19-data/issues/80">known issue</a> with the dataset.</p>
+    <p>To account for these holes in the data, we used the growth rate (discussed below) calculated across adjacent days to estimate what the case count for the missing day would be. We only did this for historical data.</p>
+    <h3>Calculations</h3>
+    <p>The original data included cases and deaths. We focused on cases and pulled some additional metrics out of that figure: new cases, growth factor, and doubling time.</p>
+    <h4>New Cases</h4>
+    <p>New cases is a simple calculation, just subtracting the total cases one day from the total cases the previous day.</p>
+    <h4>Growth Factor</h4>
+    <p>The <em>growth factor</em> is defined as the ratio of new cases in one day to the ratio of new cases the previous day. It
+      is a useful metric for knowing where we are on "the curve". A growth factor greater than 1 implies we are still on
+      the exponential portion of the curve, while a growth factor less than 1 implies new cases are slowing down.</p>
+    <p>To provide a smoother, less noisy figure we averaged the growth factor for the previous 5 days.</p>
+    <h4>Doubling Time</h4>
+    <p>The doubling time of cases was calculated for every location in the dataset. It measures the number of days
+      that it will take for the number of cases to double given the current growth rate.</p>
+    <p>The <em>growth rate</em> used to calculate doubling time is the exponential growth rate, as opposed to the growth factor
+      mentioned above.</p>
+  </section>
+  <section>
+    <h2>Who Made This</h2>
+    <p>This website was made by <a href="https://twitter.com/mattparrilla">Matt Parrilla</a> and <a href="https://twitter.com/BrianHoldefehr">Brian Holdefehr</a>. We're a couple of software guys who wanted to get a better idea for what was going on around us.</p>
+  </section>
   {% endblock %}
