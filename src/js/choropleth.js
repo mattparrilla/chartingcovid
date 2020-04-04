@@ -320,9 +320,23 @@ export async function updateMapZoom() {
   }
 }
 
+async function animateMap(interval) {
+  const slider = document.getElementById("js_map_slider");
+  slider.value = 0;
+  const max = parseInt(slider.max, 10);
+  const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+  for (let i = 0; i <= slider.max; i++) {
+    await sleep(interval);
+    updateSliderLabel(slider, max - i);
+    updateMap(max - i);
+  }
+}
+
 export default async function initChoropleth() {
   const slider = document.getElementById("js_map_slider");
   const countyOutline = await window.dataManager.getCountyOutline();
+
+  window.animateMap = animateMap;
 
   initSlider();
   drawLegend();
