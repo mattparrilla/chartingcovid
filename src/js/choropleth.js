@@ -177,16 +177,15 @@ async function drawLegend() {
 
 function mergeNYCCounties(countyOutline) {
   const NYCCounties = ["36085", "36081", "36061", "36047", "36005"];
-  const newYorkCity = topojson.merge(countyOutline,
+  const newYorkCity = topojson.mergeArcs(countyOutline,
     countyOutline.objects.counties.geometries.filter(d => NYCCounties.includes(d.id)));
-  const counties = topojson.feature(countyOutline, countyOutline.objects.counties).features;
-  counties.push({
-    type: "Feature",
-    id: -10003,
-    properties: { name: "New York City" },
-    geometry: newYorkCity
-  });
-  return counties;
+  newYorkCity.id = "-10003";
+  countyOutline.objects.counties.geometries.push(newYorkCity);
+
+  // Remove NYC counties from county geometries
+  countyOutline.objects.counties.geometries.filter(d => !NYCCounties.includes(d.id));
+
+  return topojson.feature(countyOutline, countyOutline.objects.counties).features;
 }
 
 function drawMap(countyOutline) {
