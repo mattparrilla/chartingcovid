@@ -178,8 +178,10 @@ async function drawLegend() {
 function drawMap(countyOutline) {
   svg.on("click", reset);
 
-  // enable zoom and pan with mouse in SVG element
-  svg.call(zoom);
+  // enable zoom and pan with mouse in SVG element if not a touch screen
+  if (!("ontouchstart" in window)) {
+    svg.call(zoom);
+  }
 
   // Draw counties
   g.append("g")
@@ -291,7 +293,7 @@ export async function updateMapZoom() {
   }
 }
 
-export default async function initCaseCountMap() {
+export default async function initChoropleth() {
   const countyOutline = await window.dataManager.getCountyOutline();
   window.d3 = d3;
   const slider = document.getElementById("js_map_slider");
