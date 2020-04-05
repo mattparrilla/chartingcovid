@@ -62,7 +62,7 @@ def upload_file(file_name, destination="", bucket="ramble-prod", separator="/"):
     if ext == ".js":
         return ""
 
-    if ext in [".css", ".svg", ".jpg", ".jpeg", ".png"]:
+    if ext in [".css", ".svg", ".jpg", ".jpeg", ".png", ".json"]:
         extra_args["CacheControl"] = STATIC_ASSET_CACHE_CONTROL
 
     # Tell s3 our js file is gzipped
