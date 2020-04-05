@@ -4,9 +4,11 @@ from chalicelib.create_covid_json import generate_case_json
 from chalicelib.create_new_case_json import generate_new_case_json
 from chalicelib.push_to_s3 import upload_file, clear_cloudfront_cache
 import boto3
+from datetime import datetime
 
 app = Chalice(app_name='charting_covid_data')
 
+CLOUDFRONT_DISTRIBUTION_ID = "EMZKVG33KBTNS"
 BUCKET = "charting-covid-prod"
 s3_client = boto3.client("s3")
 
@@ -39,3 +41,17 @@ def dummy():
         ddb.put_object_acl(Bucket="matthewparrilla.com", ACL="public-read")
     except Exception as e:
         print("move along")
+
+    client = boto3.client("cloudfront")
+    client.create_invalidation(
+        DistributionId=CLOUDFRONT_DISTRIBUTION_ID,
+        InvalidationBatch={
+            'Paths': {
+                'Quantity': 1,
+                'Items': ["/dontmatchever"]
+            },
+            # CallerReference needs to be a unique value in order to perform
+            # an invalidation
+            'CallerReference': str(int(datetime.now().timestamp()))
+        }
+    )
