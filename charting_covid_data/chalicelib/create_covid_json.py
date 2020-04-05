@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import json
 import math
+import gzip
 from statistics import mean
 from typing import Optional, Union
 
@@ -375,7 +376,9 @@ def generate_case_json(county_input: list, state_input: list, output_file: str,
     state_and_county_data = generate_covid_data(
         county_input, state_data, growth_metric_days, False)
 
-    with open(output_file, "w") as output:
-        json.dump(state_and_county_data, output)
+    json_str = json.dumps(state_and_county_data)
+    json_bytes = json_str.encode("utf-8")
+    with gzip.GzipFile(output_file, "w") as output:
+        output.write(json_bytes)
 
     return output_file

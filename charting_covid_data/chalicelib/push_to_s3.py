@@ -5,10 +5,9 @@ from datetime import datetime
 
 import boto3
 
-from constants import CLOUDFRONT_DISTRIBUTION_ID
-
 # cache static assets for one year, rely on filename to break cache
 STATIC_ASSET_CACHE_CONTROL = "public, max-age={}".format(60 * 60 * 24 * 365)
+CLOUDFRONT_DISTRIBUTION_ID = "EMZKVG33KBTNS"
 
 
 def generate_object_name(destination, file_path, separator):
@@ -45,7 +44,9 @@ def upload_file(file_name, destination="", bucket="ramble-prod", separator="/"):
 
     s3 = boto3.client("s3")
 
-    object_name = generate_object_name(destination, file_path, separator)
+    print("upload_file - file_name:   {}".format(file_name))
+    object_name = generate_object_name(destination, file_name, separator)
+    print("upload_file - object_name: {}".format(object_name))
 
     extra_args = {
         "ACL": "public-read",
@@ -62,11 +63,11 @@ def upload_file(file_name, destination="", bucket="ramble-prod", separator="/"):
     if ext == ".js":
         return ""
 
-    if ext in [".css", ".svg", ".jpg", ".jpeg", ".png"]:
+    if ext in [".css", ".svg", ".jpg", ".jpeg", ".png", ".json"]:
         extra_args["CacheControl"] = STATIC_ASSET_CACHE_CONTROL
 
     # Tell s3 our js file is gzipped
-    if ext == ".gz" and fn.endswith(".js"):
+    if ext == ".gz" and (fn.endswith(".js") or fn.endswith(".json")):
         extra_args["ContentEncoding"] = "gzip"
         extra_args["CacheControl"] = STATIC_ASSET_CACHE_CONTROL
         object_name = fn

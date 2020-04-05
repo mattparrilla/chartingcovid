@@ -1,0 +1,22 @@
+{
+  "resources": [
+    {
+      "name": "default-role",
+      "resource_type": "iam_role",
+      "role_arn": "arn:aws:iam::492902295020:role/charting_covid_data-dev",
+      "role_name": "charting_covid_data-dev"
+    },
+    {
+      "name": "index",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:us-east-1:492902295020:function:charting_covid_data-dev-index"
+    },
+    {
+      "name": "index-event",
+      "resource_type": "cloudwatch_event",
+      "rule_name": "charting_covid_data-dev-index-event"
+    }
+  ],
+  "schema_version": "2.0",
+  "backend": "api"
+}
