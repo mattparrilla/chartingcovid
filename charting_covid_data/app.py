@@ -24,3 +24,18 @@ def index(event):
     upload_file(new_case_json, destination="data", bucket="charting-covid-prod", separator="/tmp")
     clear_cloudfront_cache()
     return "Hello World"
+
+
+@app.route("/dummy")
+def dummy():
+    """Hack used to get chalice to generate proper IAM b/c of bug related to
+       boto3.resource not triggering correct IAM policy:
+       https://github.com/aws/chalice/issues/118#issuecomment-298490541
+    """
+    ddb = boto3.client("s3")
+    try:
+        ddb.get_object(Bucket="matthewparrilla.com")
+        ddb.put_object(Bucket="matthewparrilla.com")
+        ddb.put_object_acl(Bucket="matthewparrilla.com", ACL="public-read")
+    except Exception as e:
+        print("move along")
