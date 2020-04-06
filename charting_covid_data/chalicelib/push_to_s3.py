@@ -6,7 +6,7 @@ from datetime import datetime
 import boto3
 
 # cache static assets for one year, rely on filename to break cache
-STATIC_ASSET_CACHE_CONTROL = "public, max-age={}".format(60 * 60 * 24 * 365)
+STATIC_ASSET_CACHE_CONTROL = "no-cache, max-age={}".format(60 * 60 * 24 * 365)
 CLOUDFRONT_DISTRIBUTION_ID = "EMZKVG33KBTNS"
 
 
@@ -63,13 +63,14 @@ def upload_file(file_name, destination="", bucket="ramble-prod", separator="/"):
     if ext == ".js":
         return ""
 
-    if ext in [".css", ".svg", ".jpg", ".jpeg", ".png", ".json"]:
+    if ext in [".css", ".svg", ".jpg", ".jpeg", ".png"]:
         extra_args["CacheControl"] = STATIC_ASSET_CACHE_CONTROL
 
     # Tell s3 our js file is gzipped
     if ext == ".gz" and (fn.endswith(".js") or fn.endswith(".json")):
         extra_args["ContentEncoding"] = "gzip"
-        extra_args["CacheControl"] = STATIC_ASSET_CACHE_CONTROL
+        extra_args["CacheControl"] = "no-cache, max-age=0"
+
         object_name = fn
     elif ext == ".gz":  # ignore gzipped source maps
         return ""
