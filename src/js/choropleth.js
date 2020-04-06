@@ -115,10 +115,13 @@ async function countyMouseOut() {
   }
 }
 
+function calculateExtent(data) {
+  return d3.extent((Object.values(data)).map(c => c.cases !== 0 ? Math.log(c.cases) : 0));
+}
+
 async function drawLegend() {
   const mostRecentData = await window.dataManager.getMostRecentData();
-  const extent =
-    d3.extent((Object.values(mostRecentData)).map(c => Math.log(c.cases)));
+  const extent = calculateExtent(mostRecentData);
   const ticks = 9;
   const color = d3.scaleQuantize(extent, d3.schemeOranges[ticks]);
 
@@ -249,8 +252,7 @@ function drawMap(countyOutline) {
 async function updateMap(daysPrior = 0) {
   const caseData = await window.dataManager.getDaysPriorData(daysPrior);
   const mostRecentData = await window.dataManager.getMostRecentData();
-  const extent =
-    d3.extent((Object.values(mostRecentData)).map(c => Math.log(c.cases)));
+  const extent = calculateExtent(mostRecentData);
   const color = d3.scaleQuantize(extent, d3.schemeOranges[9]);
 
   svg.selectAll(".map_county")
@@ -320,7 +322,7 @@ export async function updateMapZoom() {
   }
 }
 
-async function animateMap(interval) {
+async function animateMap(interval = 100) {
   const slider = document.getElementById("js_map_slider");
   slider.value = 0;
   const max = parseInt(slider.max, 10);

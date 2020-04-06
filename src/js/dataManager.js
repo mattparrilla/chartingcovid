@@ -168,8 +168,8 @@ class DataManager {
 export default async function initDataManager() {
   window.dataManager = new DataManager(
     json("/data/fips_data.json"),
-    json("/data/covid_data.json"),
+    json("/data/covid_data.json?v=1.0"),
     json("/data/counties-albers-10m2.json"),
-    json("/data/new_case_data.json")
+    json("/data/new_case_data.json?v=1.0")
   );
 }

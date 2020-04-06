@@ -1,15 +1,15 @@
 import requests
+import csv
+from io import StringIO
+
+
+def convert_to_list(scsv):
+    f = StringIO(scsv)
+    reader = csv.reader(f, delimiter=',')
+    return list(reader)
 
 
 def update_case_data():
     county_request = requests.get('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv')
-    with open("us-counties.csv", "w") as county_output:
-        county_output.write(county_request.text)
-
     state_request = requests.get('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv')
-    with open("us-states.csv", "w") as state_output:
-        state_output.write(state_request.text)
-
-
-if __name__ == "__main__":
-    update_case_data()
+    return [convert_to_list(county_request.text), convert_to_list(state_request.text)]

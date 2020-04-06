@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import json
+import gzip
 
 from chalicelib.create_covid_json import record_case_counts, get_daily_increases
 
@@ -73,5 +74,8 @@ def generate_new_case_json(counties_data: list, states_data: list, output_file: 
     county_data = generate_new_case_data(counties_data, minimum_case_count)
     state_data.update(county_data)
 
-    with open(output_file, "w") as output:
-        json.dump(state_data, output)
+    json_str = json.dumps(state_data)
+    json_bytes = json_str.encode("utf-8")
+    with gzip.GzipFile(output_file, "w") as output:
+        output.write(json_bytes)
+    return output_file
