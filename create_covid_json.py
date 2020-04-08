@@ -129,7 +129,7 @@ def get_doubling_time(exp_growth_rate: float) -> float:
     return math.log(2) / math.log(1 + exp_growth_rate)
 
 
-def get_averaged_doubling_time(preceding_case_counts: list) -> float:
+def get_averaged_doubling_time(preceding_case_counts: list) -> Optional[float]:
     """
     The idea here is to return the average estimated doubling time of each of
     the preceding counts and the current count.
@@ -146,7 +146,9 @@ def get_averaged_doubling_time(preceding_case_counts: list) -> float:
             latest_count, earlier_count, num_periods=i)
         if exp_growth_rate > 0:
             growth_rates.append(exp_growth_rate)
-    return mean([get_doubling_time(r) for r in growth_rates])
+    if len(growth_rates):
+        return mean([get_doubling_time(r) for r in growth_rates])
+    return None
 
 
 def get_daily_increases(preceding_case_counts: list) -> list:
