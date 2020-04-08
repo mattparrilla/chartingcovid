@@ -21,28 +21,32 @@ BUCKET = "charting-covid-prod"
 # def index():
 @app.schedule(Rate(4, unit=Rate.HOURS))
 def index(event):
+    # read population data from our s3 bucket
     s3 = boto3.client("s3")
     compressed_object = s3.get_object(Bucket=BUCKET, Key="data/fips_data.json")
     bytestream = BytesIO(compressed_object['Body'].read())
     fips_data = json.loads(GzipFile(None,
         'rb', fileobj=bytestream).read().decode('utf-8'))
 
+    # fetch new cases
     county_input, state_input = update_case_data()
 
     # update case file
     case_json = generate_case_json(county_input, state_input,
         "/tmp/covid_data.json.gz", fips_data, 5)
-    upload_file(case_json, destination="data", bucket="charting-covid-prod", separator="/tmp")
+    upload_file(case_json, destination="data", bucket="charting-covid-prod",
+        separator="/tmp")
     print("Case JSON:     {}".format(case_json))
 
     # update new cases file
     new_case_json = generate_new_case_json(county_input, state_input,
         "/tmp/new_case_data.json.gz", 50)
-    upload_file(new_case_json, destination="data", bucket="charting-covid-prod", separator="/tmp")
+    upload_file(new_case_json, destination="data", bucket="charting-covid-prod",
+        separator="/tmp")
     print("New Case JSON: {}".format(new_case_json))
 
     clear_cloudfront_cache()
-    return "Hello World"
+    return "Update succeeded"
 
 
 @app.route("/dummy")
