@@ -34,7 +34,7 @@ def generate_new_case_data(input_data: list, minimum_case_count: int,
     # data. We only want the chronological list of cases for each place
     # that is output 2nd.
     _, inverse_chronological_case_data = record_case_counts(
-            input_data, defaultdict(dict), inverse_chronological_case_data,
+            input_data, defaultdict(dict), False, inverse_chronological_case_data,
             False, is_state_file, latest_date)
 
     output_data = {}
@@ -78,4 +78,5 @@ def generate_new_case_json(counties_data: list, states_data: list, output_file: 
     json_bytes = json_str.encode("utf-8")
     with gzip.GzipFile(output_file, "w") as output:
         output.write(json_bytes)
+
     return output_file

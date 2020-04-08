@@ -1,29 +1,46 @@
+import json
+from datetime import datetime
+from gzip import GzipFile
+from io import BytesIO
+
 from chalice import Chalice, Rate
+import boto3
+
 from chalicelib.update_case_data import update_case_data
 from chalicelib.create_covid_json import generate_case_json
 from chalicelib.create_new_case_json import generate_new_case_json
 from chalicelib.push_to_s3 import upload_file, clear_cloudfront_cache
-import boto3
-from datetime import datetime
 
 app = Chalice(app_name='charting_covid_data')
 
 CLOUDFRONT_DISTRIBUTION_ID = "EMZKVG33KBTNS"
 BUCKET = "charting-covid-prod"
-s3_client = boto3.client("s3")
 
 
 # @app.route('/')
 # def index():
 @app.schedule(Rate(4, unit=Rate.HOURS))
 def index(event):
+    s3 = boto3.client("s3")
+    compressed_object = s3.get_object(Bucket=BUCKET, Key="data/fips_data.json")
+    bytestream = BytesIO(compressed_object['Body'].read())
+    fips_data = json.loads(GzipFile(None,
+        'rb', fileobj=bytestream).read().decode('utf-8'))
+
     county_input, state_input = update_case_data()
-    case_json = generate_case_json(county_input, state_input, "/tmp/covid_data.json.gz", 5)
-    print("Case JSON:     {}".format(case_json))
-    new_case_json = generate_new_case_json(county_input, state_input, "/tmp/new_case_data.json.gz", 50)
-    print("New Case JSON: {}".format(new_case_json))
+
+    # update case file
+    case_json = generate_case_json(county_input, state_input,
+        "/tmp/covid_data.json.gz", fips_data, 5)
     upload_file(case_json, destination="data", bucket="charting-covid-prod", separator="/tmp")
+    print("Case JSON:     {}".format(case_json))
+
+    # update new cases file
+    new_case_json = generate_new_case_json(county_input, state_input,
+        "/tmp/new_case_data.json.gz", 50)
     upload_file(new_case_json, destination="data", bucket="charting-covid-prod", separator="/tmp")
+    print("New Case JSON: {}".format(new_case_json))
+
     clear_cloudfront_cache()
     return "Hello World"
 
