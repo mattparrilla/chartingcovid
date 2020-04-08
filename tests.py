@@ -17,6 +17,10 @@ class TestDataMunging(unittest.TestCase):
             ['2020-01-21', 'Snohomish', 'Washington', '53061', '50', '0'],
             ['2020-01-22', 'Snohomish', 'Washington', '53061', '51', '0'],
             ['2020-01-23', 'Snohomish', 'Washington', '53061', '52', '0']]
+        fips_data = {
+            "53061": {"county": "Snohomish", "state": "Washington",
+                "population": 100}
+        }
 
         growth_factor = float(52 - 51) / (51 - 50)
         latest_growth_rate = math.log(52 / 51)
@@ -48,6 +52,7 @@ class TestDataMunging(unittest.TestCase):
         output_data = defaultdict(dict)
         self.assertEqual(generate_covid_data(input,
                                              output_data,
+                                             fips_data,
                                              3,
                                              False),
                          expected_output)
