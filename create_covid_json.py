@@ -48,7 +48,7 @@ def set_case_count(output_data: dict, date: str, fips: str, cases: int,
         output_data[date][fips] = {"cases": cases}
 
 
-def set_increase_count(output_data: dict, date: str, fips: str, cases: int,
+def set_increase_count(output_data: dict, date: str, fips: str, increase: int,
         output_fips_first: bool) -> None:
     """
     Sets the given increase count into output_data for a Date-FIPS combo.
@@ -59,13 +59,15 @@ def set_increase_count(output_data: dict, date: str, fips: str, cases: int,
         # {"56043":
         #    {"2020-03-27": {"increase": 12}, ...}
         # }
-        output_data[fips][date] = {"increase": cases}
+        entry = output_data[fips][date]
+        entry["increase"] = increase
     else:
         # output_data is keyed by date, and then FIPS.
         # {"2020-03-27":
         #    {"56043": {"increase": 12}, ...}
         # }
-        output_data[date][fips] = {"increase": cases}
+        entry = output_data[date][fips]
+        entry["increase"] = increase
 
 
 def set_per_capita(output_data: dict, date: str, fips: str, cases: int,
@@ -364,10 +366,19 @@ def record_case_counts(csv_data: list, output_data: dict, fips_data: dict,
             for i in range(1, previous_days_adjusted_down + 1):
                 fips_row[day_offset + i] = cases
 
+        # Set the per-capita case count.
         population = fips_data.get(row[FIPS], {}).get("population")
         if population:
             set_per_capita(output_data, row[DATE], row[FIPS], cases,
                 population, output_fips_first)
+
+        # Set this days case increase.
+        preceding_counts = \
+            inverse_chronological_case_data[row[FIPS]][day_offset:day_offset+2]
+        if len(preceding_counts) == 2 and None not in preceding_counts:
+            increase = preceding_counts[0] - preceding_counts[1]
+            set_increase_count(output_data, row[DATE], row[FIPS], increase,
+                output_fips_first)
 
     return output_data, inverse_chronological_case_data
 
