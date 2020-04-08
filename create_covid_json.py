@@ -485,7 +485,7 @@ parser.add_argument("--output_fips_first",
     help="Output JSON will be top-level keyed by FIPS if this arg is passed. "
          "If this arg is not passed, the top-level key of the output will be "
          "the date.",
-    action="store_true")
+    default=False, action="store_true")
 args = parser.parse_args()
 
 if __name__ == "__main__":
