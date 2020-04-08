@@ -48,6 +48,49 @@ def set_case_count(output_data: dict, date: str, fips: str, cases: int,
         output_data[date][fips] = {"cases": cases}
 
 
+def set_increase_count(output_data: dict, date: str, fips: str, increase: int,
+        output_fips_first: bool) -> None:
+    """
+    Sets the given increase count into output_data for a Date-FIPS combo.
+    Does this based on the output_fips_first option.
+    """
+    if output_fips_first:
+        # output_data is keyed by FIPS, then date
+        # {"56043":
+        #    {"2020-03-27": {"increase": 12}, ...}
+        # }
+        entry = output_data[fips][date]
+        entry["increase"] = increase
+    else:
+        # output_data is keyed by date, and then FIPS.
+        # {"2020-03-27":
+        #    {"56043": {"increase": 12}, ...}
+        # }
+        entry = output_data[date][fips]
+        entry["increase"] = increase
+
+
+def set_per_capita(output_data: dict, date: str, fips: str, cases: int,
+        population: int, output_fips_first: bool) -> None:
+    """
+    Sets the per capita case count into output_data for a Date-FIPS combo.
+    Does this based on the output_fips_first option.
+    """
+    if output_fips_first:
+        # output_data is keyed by FIPS, then date
+        # {"56043":
+        #    {"2020-03-27": {"per_capita": 0.12}, ...}
+        # }
+        entry = output_data[fips][date]
+        entry["per_capita"] =  cases / population
+    else:
+        # output_data is keyed by date, and then FIPS.
+        # {"2020-03-27":
+        #    {"56043": {"per_capita": 0.12}, ...}
+        # }
+        entry = output_data[date][fips]
+        entry["per_capita"] =  cases / population
+
 def get_case_count(output_data: dict, date: str, fips: str,
         output_fips_first: bool) -> Optional[int]:
     """
@@ -86,7 +129,7 @@ def get_doubling_time(exp_growth_rate: float) -> float:
     return math.log(2) / math.log(1 + exp_growth_rate)
 
 
-def get_averaged_doubling_time(preceding_case_counts: list) -> float:
+def get_averaged_doubling_time(preceding_case_counts: list) -> Optional[float]:
     """
     The idea here is to return the average estimated doubling time of each of
     the preceding counts and the current count.
@@ -103,7 +146,9 @@ def get_averaged_doubling_time(preceding_case_counts: list) -> float:
             latest_count, earlier_count, num_periods=i)
         if exp_growth_rate > 0:
             growth_rates.append(exp_growth_rate)
-    return mean([get_doubling_time(r) for r in growth_rates])
+    if len(growth_rates):
+        return mean([get_doubling_time(r) for r in growth_rates])
+    return None
 
 
 def get_daily_increases(preceding_case_counts: list) -> list:
@@ -235,7 +280,7 @@ def record_growth_metrics(output_data: dict,
     return output_data
 
 
-def record_case_counts(csv_data: list, output_data: dict,
+def record_case_counts(csv_data: list, output_data: dict, fips_data: dict,
         inverse_chronological_case_data: dict, output_fips_first: bool,
         is_state_file: bool, latest_date: datetime.date) -> (dict, dict):
     """
@@ -323,6 +368,20 @@ def record_case_counts(csv_data: list, output_data: dict,
             for i in range(1, previous_days_adjusted_down + 1):
                 fips_row[day_offset + i] = cases
 
+        # Set the per-capita case count.
+        population = fips_data.get(row[FIPS], {}).get("population")
+        if population:
+            set_per_capita(output_data, row[DATE], row[FIPS], cases,
+                population, output_fips_first)
+
+        # Set this days case increase.
+        preceding_counts = \
+            inverse_chronological_case_data[row[FIPS]][day_offset:day_offset+2]
+        if len(preceding_counts) == 2 and None not in preceding_counts:
+            increase = preceding_counts[0] - preceding_counts[1]
+            set_increase_count(output_data, row[DATE], row[FIPS], increase,
+                output_fips_first)
+
     return output_data, inverse_chronological_case_data
 
 def read_data_from_csv(filename: str) -> list:
@@ -334,7 +393,7 @@ def read_data_from_csv(filename: str) -> list:
         return list(reader)
 
 
-def generate_covid_data(covid_data: list, output_data: dict,
+def generate_covid_data(covid_data: list, output_data: dict, fips_data: dict,
         growth_metric_days: int, output_fips_first: bool,
         is_state_file: bool=False) -> dict:
     """
@@ -379,8 +438,9 @@ def generate_covid_data(covid_data: list, output_data: dict,
         defaultdict(lambda: [None] * total_days_of_data)
 
     output_data, inverse_chronological_case_data = record_case_counts(
-            covid_data, output_data, inverse_chronological_case_data,
-            output_fips_first, is_state_file, latest_date)
+            covid_data, output_data, fips_data,
+            inverse_chronological_case_data, output_fips_first, is_state_file,
+            latest_date)
 
     output_data = record_growth_metrics(output_data,
             inverse_chronological_case_data, output_fips_first,
@@ -390,18 +450,22 @@ def generate_covid_data(covid_data: list, output_data: dict,
 
 
 def generate_json(counties_file: str, states_file: str, output_file: str,
-        growth_metric_days: int, output_fips_first: bool) -> None:
-    empty_data = defaultdict(dict)
-    state_csv = read_data_from_csv(states_file)
-    state_data = generate_covid_data(
-        state_csv, empty_data, growth_metric_days, output_fips_first,
-        is_state_file=True)
-    county_csv = read_data_from_csv(counties_file)
-    state_and_county_data = generate_covid_data(
-        county_csv, state_data, growth_metric_days, output_fips_first)
+        fips_file: str, growth_metric_days: int,
+        output_fips_first: bool) -> None:
+    with open(fips_file) as f:
+        fips_data = json.load(f)
+        empty_data = defaultdict(dict)
+        state_csv = read_data_from_csv(states_file)
+        state_data = generate_covid_data(
+            state_csv, empty_data, fips_data, growth_metric_days,
+            output_fips_first, is_state_file=True)
+        county_csv = read_data_from_csv(counties_file)
+        state_and_county_data = generate_covid_data(
+            county_csv, state_data, fips_data, growth_metric_days,
+            output_fips_first)
 
-    with open(output_file, "w") as output:
-        json.dump(state_and_county_data, output)
+        with open(output_file, "w") as output:
+            json.dump(state_and_county_data, output)
 
 
 parser = argparse.ArgumentParser()
@@ -411,6 +475,8 @@ parser.add_argument("--state_input", help="File path to current state CSV.",
     default="us-states.csv")
 parser.add_argument("--output_file", help="File path to output JSON file.",
     default="covid_data.json")
+parser.add_argument("--fips_json", help="File path to FIPS JSON file.",
+    default="fips_data.json")
 parser.add_argument("--growth_metric_days",
     help="The number of preceding days' growth changes to calculate the "
          "growth factor and doubling time from.",
@@ -419,9 +485,9 @@ parser.add_argument("--output_fips_first",
     help="Output JSON will be top-level keyed by FIPS if this arg is passed. "
          "If this arg is not passed, the top-level key of the output will be "
          "the date.",
-    action="store_true")
+    default=False, action="store_true")
 args = parser.parse_args()
 
 if __name__ == "__main__":
     generate_json(args.county_input, args.state_input, args.output_file,
-        args.growth_metric_days, args.output_fips_first)
+        args.fips_json, args.growth_metric_days, args.output_fips_first)
