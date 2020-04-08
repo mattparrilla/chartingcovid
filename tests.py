@@ -34,16 +34,21 @@ class TestDataMunging(unittest.TestCase):
             "2020-01-21": {
                 "53061": {
                     "cases": 50,
+                    "per_capita": 0.5
                 }
             },
             "2020-01-22": {
                 "53061": {
                     "cases": 51,
+                    "increase": 1,
+                    "per_capita": 0.51
                 }
             },
             "2020-01-23": {
                 "53061": {
                     "cases": 52,
+                    "increase": 1,
+                    "per_capita": 0.52,
                     "doubling_time": doubling_time,
                     "growth_factor": growth_factor
                 }
