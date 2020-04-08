@@ -34,6 +34,8 @@ def write_dict_to_gzipped_json(data, output_filename):
 # def index():
 @app.schedule(Rate(4, unit=Rate.HOURS))
 def index(event):
+    print("event: {}".format(event))
+
     # read population data from our s3 bucket
     s3 = boto3.client("s3")
     compressed_object = s3.get_object(Bucket=BUCKET, Key="data/fips_data.json")
@@ -66,7 +68,7 @@ def index(event):
             separator="/tmp")
         print("New Case JSON: {}".format(new_case_json))
     else:
-        with open("../data/covid_case_data.json", "w") as output:
+        with open("../data/new_case_data.json", "w") as output:
             output.write(json.dumps(new_case_data))
 
     clear_cloudfront_cache()
