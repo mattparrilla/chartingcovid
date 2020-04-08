@@ -67,16 +67,10 @@ def generate_new_case_data(input_data: list, minimum_case_count: int,
     return output_data
 
 
-def generate_new_case_json(counties_data: list, states_data: list, output_file: str,
-        minimum_case_count: int) -> None:
+def generate_new_case_json(counties_data: list, states_data: list,
+        minimum_case_count: int) -> dict:
     state_data = generate_new_case_data(
         states_data, minimum_case_count, is_state_file=True)
     county_data = generate_new_case_data(counties_data, minimum_case_count)
     state_data.update(county_data)
-
-    json_str = json.dumps(state_data)
-    json_bytes = json_str.encode("utf-8")
-    with gzip.GzipFile(output_file, "w") as output:
-        output.write(json_bytes)
-
-    return output_file
+    return state_data

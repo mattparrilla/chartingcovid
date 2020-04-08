@@ -1,8 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-import json
 import math
-import gzip
 from statistics import mean
 from typing import Optional, Union
 
@@ -429,8 +427,8 @@ def generate_covid_data(covid_data: list, output_data: dict, fips_data: dict,
     return output_data
 
 
-def generate_case_json(county_input: list, state_input: list, output_file: str,
-        fips_data: dict, growth_metric_days: int) -> None:
+def generate_case_json(county_input: list, state_input: list,
+        fips_data: dict, growth_metric_days: int) -> dict:
     empty_data = defaultdict(dict)
     state_data = generate_covid_data(
         state_input, empty_data, fips_data, growth_metric_days, False,
@@ -438,9 +436,4 @@ def generate_case_json(county_input: list, state_input: list, output_file: str,
     state_and_county_data = generate_covid_data(
         county_input, state_data, fips_data, growth_metric_days, False)
 
-    json_str = json.dumps(state_and_county_data)
-    json_bytes = json_str.encode("utf-8")
-    with gzip.GzipFile(output_file, "w") as output:
-        output.write(json_bytes)
-
-    return output_file
+    return state_and_county_data

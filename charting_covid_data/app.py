@@ -5,6 +5,7 @@ from io import BytesIO
 
 from chalice import Chalice, Rate
 import boto3
+import gzip
 
 from chalicelib.update_case_data import update_case_data
 from chalicelib.create_covid_json import generate_case_json
@@ -15,6 +16,18 @@ app = Chalice(app_name='charting_covid_data')
 
 CLOUDFRONT_DISTRIBUTION_ID = "EMZKVG33KBTNS"
 BUCKET = "charting-covid-prod"
+
+# This gets set when lambda is run as a chron. If False it means we're running
+# locally
+event = False
+
+
+def write_dict_to_gzipped_json(data, output_filename):
+    json_str = json.dumps(data)
+    json_bytes = json_str.encode("utf-8")
+    with gzip.GzipFile(output_filename, "w") as output:
+        output.write(json_bytes)
+    return output_filename
 
 
 # @app.route('/')
@@ -32,18 +45,29 @@ def index(event):
     county_input, state_input = update_case_data()
 
     # update case file
-    case_json = generate_case_json(county_input, state_input,
-        "/tmp/covid_data.json.gz", fips_data, 5)
-    upload_file(case_json, destination="data", bucket="charting-covid-prod",
-        separator="/tmp")
-    print("Case JSON:     {}".format(case_json))
+    case_data = generate_case_json(county_input, state_input, fips_data, 5)
+    # if event, we are on s3 running as a chron
+    if event:
+        case_json = write_dict_to_gzipped_json(case_data, "/tmp/covid_data.json.gz")
+        upload_file(case_json, destination="data", bucket="charting-covid-prod",
+            separator="/tmp")
+        print("Case JSON:     {}".format(case_json))
+    else:
+        with open("../data/covid_data.json", "w") as output:
+            output.write(json.dumps(case_data))
 
     # update new cases file
-    new_case_json = generate_new_case_json(county_input, state_input,
-        "/tmp/new_case_data.json.gz", 50)
-    upload_file(new_case_json, destination="data", bucket="charting-covid-prod",
-        separator="/tmp")
-    print("New Case JSON: {}".format(new_case_json))
+    new_case_data = generate_new_case_json(county_input, state_input, 50)
+    # if event, we are on s3 running as a chron
+    if event:
+        new_case_json = write_dict_to_gzipped_json(new_case_data,
+            "/tmp/new_case_data.json.gz")
+        upload_file(new_case_json, destination="data", bucket="charting-covid-prod",
+            separator="/tmp")
+        print("New Case JSON: {}".format(new_case_json))
+    else:
+        with open("../data/covid_case_data.json", "w") as output:
+            output.write(json.dumps(new_case_data))
 
     clear_cloudfront_cache()
     return "Update succeeded"
