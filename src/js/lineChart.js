@@ -16,7 +16,8 @@ const svg = d3.select("#js_line_chart")
 const line = d3.line()
   .x((d, i) => x(i))
   // don't show values below 0
-  .y((d) => d > 1 ? y(d) : y(0));
+  .y((d) => d > 1 ? y(d) : y(0))
+  .curve(d3.curveBasis);
 
 
 function generateHighlights(data) {
@@ -30,12 +31,12 @@ function generateHighlights(data) {
     }))
     .sort((a, b) => b.maxNewCases > a.maxNewCases ? 1 : -1);
 
-  const fastestRisers = summaryStatistics.sort((a, b) => (
+  const fastestRisers = [...summaryStatistics.sort((a, b) => (
     b.latestNewCases > a.latestNewCases ? 1 : -1
-  ));
-  const longestDuration = summaryStatistics.sort((a, b) => (
+  ))];
+  const longestDuration = [...summaryStatistics.sort((a, b) => (
     b.daysSince50 > a.daysSince50 ? 1 : -1
-  ));
+  ))];
   const highestPeak = summaryStatistics.sort((a, b) => (
     b.maxNewCases > a.maxNewCases ? 1 : -1
   ));
