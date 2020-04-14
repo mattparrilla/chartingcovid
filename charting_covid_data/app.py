@@ -11,7 +11,6 @@ from chalicelib.update_case_data import update_case_data
 from chalicelib.create_covid_json import generate_case_json
 from chalicelib.create_new_case_json import generate_new_case_json
 from chalicelib.push_to_s3 import upload_file, clear_cloudfront_cache
-from chalicelib.fips_data import fips_data
 
 app = Chalice(app_name='charting_covid_data')
 
@@ -36,6 +35,16 @@ def write_dict_to_gzipped_json(data, output_filename):
 @app.schedule(Rate(4, unit=Rate.HOURS))
 def case_data(event):
     start = datetime.now()
+
+    # read population data from our s3 bucket
+    print("Get FIPS data")
+    print("time delta: {}".format((datetime.now() - start).seconds))
+    s3 = boto3.client("s3")
+    compressed_object = s3.get_object(Bucket=BUCKET, Key="data/fips_data.json")
+    bytestream = BytesIO(compressed_object['Body'].read())
+    fips_data = json.loads(GzipFile(None,
+        'rb', fileobj=bytestream).read().decode('utf-8'))
+
     # fetch new cases
     print("Getting case data")
     print("time delta: {}".format((datetime.now() - start).seconds))
