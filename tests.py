@@ -2,7 +2,7 @@ import unittest
 import math
 from collections import defaultdict
 
-from create_covid_json import get_growth_factor, generate_covid_data
+from charting_covid_data.chalicelib.create_covid_json import get_growth_factor, generate_covid_data
 
 
 class TestDataMunging(unittest.TestCase):

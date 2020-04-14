@@ -116,7 +116,7 @@ async function countyMouseOut() {
 }
 
 function calculateExtent(data) {
-  return d3.extent((Object.values(data)).map(c => c.cases !== 0 ? Math.log(c.cases) : 0));
+  return d3.extent((Object.values(data)).map(c => c.per_capita !== 0 ? Math.log(c.per_capita) : 0));
 }
 
 async function drawLegend() {
@@ -125,12 +125,12 @@ async function drawLegend() {
   const ticks = 9;
   const color = d3.scaleQuantize(extent, d3.schemeOranges[ticks]);
 
-  const legendWidth = 105;
+  const legendWidth = 125;
   const legendHeight = 220;
   const legendMargin = 10; // top, bottom, left, right
 
   const thresholds = color.thresholds();
-  const thresholdFormat = d => d3.format(",.0f")(Math.exp(d));
+  const thresholdFormat = d => d3.format(",.03%")(Math.exp(d));
   const tickSize = 20;
 
   const x = d3.scaleLinear()
@@ -152,7 +152,7 @@ async function drawLegend() {
     .data(color.range())
     .join("rect")
       .attr("x", legendWidth - tickSize - legendMargin)
-      .attr("y", (d, i) => x(i - 1) + legendMargin)
+      .attr("y", (d, i) => x(i - 1) + legendMargin + 20) // 30 for legend title
       .attr("width", tickSize)
       .attr("height", tickSize)
       .style("stroke", "#fff")
@@ -162,7 +162,7 @@ async function drawLegend() {
   const tickFormat = i => thresholdFormat(thresholds[i], i);
 
   legend.append("g")
-    .attr("transform", `translate(${legendWidth - legendMargin - tickSize},${legendMargin})`)
+    .attr("transform", `translate(${legendWidth - legendMargin - tickSize},${legendMargin + 20})`)
     .call(d3.axisLeft(x)
       .ticks(ticks)
       .tickFormat(tickFormat)
@@ -170,12 +170,12 @@ async function drawLegend() {
       .tickValues(tickValues))
       .call(el => el.select(".domain").remove())
       .call(el => el.append("text")
-        .attr("x", 0)
-        .attr("y", legendHeight - 20)
+        .attr("x", 25)
+        .attr("y", -10)
         .attr("fill", "currentColor")
         .attr("text-anchor", "begin")
         .attr("font-weight", "bold")
-        .text("Cases"));
+        .text("Cases Per Capita"));
 }
 
 function mergeNYCCounties(countyOutline) {
@@ -253,10 +253,16 @@ async function updateMap(daysPrior = 0) {
   const caseData = await window.dataManager.getDaysPriorData(daysPrior);
   const mostRecentData = await window.dataManager.getMostRecentData();
   const extent = calculateExtent(mostRecentData);
-  const color = d3.scaleQuantize(extent, d3.schemeOranges[9]);
+  const palette = d3.schemeOranges[9];
+  const color = d3.scaleQuantize(extent, palette);
 
   svg.selectAll(".map_county")
-    .style("fill", d => color(caseData[d.id] ? Math.log(caseData[d.id].cases) : 0));
+    .style("fill", d => {
+      if (caseData[d.id] && caseData[d.id].per_capita) {
+        return color(Math.log(caseData[d.id].per_capita));
+      }
+      return palette[0];
+    });
 }
 
 async function updateSliderLabel(slider, daysPrior = 0) {
@@ -289,8 +295,8 @@ async function initSlider() {
   const dates = await window.dataManager.getDates();
   const slider = document.getElementById("js_map_slider");
 
-  // Restrict slider to Feb 15 (when cases really started) and beyond
-  const datesSinceFeb15 = dates.slice(0, dates.findIndex(date => date === "2020-02-15"));
+  // Restrict slider to March 1 (when cases really started to grow) and beyond
+  const datesSinceFeb15 = dates.slice(0, dates.findIndex(date => date === "2020-03-01") + 1);
   slider.max = datesSinceFeb15.length - 1;
   slider.value = datesSinceFeb15.length - 1;
 

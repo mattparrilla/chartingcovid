@@ -73,6 +73,7 @@ def upload_file(file_name, destination="", bucket="ramble-prod", separator="/"):
 
         object_name = fn
     elif ext == ".gz":  # ignore gzipped source maps
+        print("Exiting because GZIP")
         return ""
 
     # Use proper content-type for a JS source map
@@ -83,6 +84,7 @@ def upload_file(file_name, destination="", bucket="ramble-prod", separator="/"):
                    bucket,
                    object_name,
                    ExtraArgs=extra_args)
+    print("Uploaded file: {}".format(object_name))
     return object_name
 
 

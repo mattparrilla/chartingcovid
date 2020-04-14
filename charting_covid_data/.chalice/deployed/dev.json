@@ -7,14 +7,24 @@
       "role_name": "charting_covid_data-dev"
     },
     {
-      "name": "index",
+      "name": "case_data",
       "resource_type": "lambda_function",
-      "lambda_arn": "arn:aws:lambda:us-east-1:492902295020:function:charting_covid_data-dev-index"
+      "lambda_arn": "arn:aws:lambda:us-east-1:492902295020:function:charting_covid_data-dev-case_data"
     },
     {
-      "name": "index-event",
+      "name": "case_data-event",
       "resource_type": "cloudwatch_event",
-      "rule_name": "charting_covid_data-dev-index-event"
+      "rule_name": "charting_covid_data-dev-case_data-event"
+    },
+    {
+      "name": "new_case_data",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:us-east-1:492902295020:function:charting_covid_data-dev-new_case_data"
+    },
+    {
+      "name": "new_case_data-event",
+      "resource_type": "cloudwatch_event",
+      "rule_name": "charting_covid_data-dev-new_case_data-event"
     },
     {
       "name": "api_handler",
