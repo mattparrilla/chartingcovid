@@ -69,8 +69,11 @@ def generate_new_case_data(input_data: list, minimum_case_count: int,
 
 def generate_new_case_json(counties_data: list, states_data: list,
         minimum_case_count: int) -> dict:
+    print("Entered generate_new_case_json")
     state_data = generate_new_case_data(
         states_data, minimum_case_count, is_state_file=True)
+    print("Calculated state level new cases")
     county_data = generate_new_case_data(counties_data, minimum_case_count)
+    print("Calculated county level new cases")
     state_data.update(county_data)
     return state_data

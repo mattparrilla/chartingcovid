@@ -11,6 +11,7 @@ from chalicelib.update_case_data import update_case_data
 from chalicelib.create_covid_json import generate_case_json
 from chalicelib.create_new_case_json import generate_new_case_json
 from chalicelib.push_to_s3 import upload_file, clear_cloudfront_cache
+from chalicelib.fips_data import fips_data
 
 app = Chalice(app_name='charting_covid_data')
 
@@ -33,32 +34,46 @@ def write_dict_to_gzipped_json(data, output_filename):
 # @app.route('/')
 # def index():
 @app.schedule(Rate(4, unit=Rate.HOURS))
-def index(event):
-    print("event: {}".format(event))
-
-    # read population data from our s3 bucket
-    s3 = boto3.client("s3")
-    compressed_object = s3.get_object(Bucket=BUCKET, Key="data/fips_data.json")
-    bytestream = BytesIO(compressed_object['Body'].read())
-    fips_data = json.loads(GzipFile(None,
-        'rb', fileobj=bytestream).read().decode('utf-8'))
-
+def case_data(event):
+    start = datetime.now()
     # fetch new cases
+    print("Getting case data")
+    print("time delta: {}".format((datetime.now() - start).seconds))
     county_input, state_input = update_case_data()
 
     # update case file
+    print("Updating cases")
+    print("time delta: {}".format((datetime.now() - start).seconds))
     case_data = generate_case_json(county_input, state_input, fips_data, 5)
     # if event, we are on s3 running as a chron
     if event:
+        print("GZIP")
+        print("time delta: {}".format((datetime.now() - start).seconds))
         case_json = write_dict_to_gzipped_json(case_data, "/tmp/covid_data.json.gz")
+        print("Attempting to upload")
+        print("time delta: {}".format((datetime.now() - start).seconds))
         upload_file(case_json, destination="data", bucket="charting-covid-prod",
             separator="/tmp")
-        print("Case JSON:     {}".format(case_json))
+        print("Uploaded case data")
+        print("time delta: {}".format((datetime.now() - start).seconds))
     else:
         with open("../data/covid_data.json", "w") as output:
             output.write(json.dumps(case_data))
 
-    # update new cases file
+    clear_cloudfront_cache()
+    print("Cache cleared")
+    print("time delta: {}".format((datetime.now() - start).seconds))
+    return "Case Update Succeeded"
+
+
+# @app.route('/')
+# def index():
+@app.schedule(Rate(4, unit=Rate.HOURS))
+def new_case_data(event):
+    # fetch new cases
+    county_input, state_input = update_case_data()
+
+    # update data
     new_case_data = generate_new_case_json(county_input, state_input, 50)
     # if event, we are on s3 running as a chron
     if event:
@@ -66,13 +81,11 @@ def index(event):
             "/tmp/new_case_data.json.gz")
         upload_file(new_case_json, destination="data", bucket="charting-covid-prod",
             separator="/tmp")
-        print("New Case JSON: {}".format(new_case_json))
     else:
         with open("../data/new_case_data.json", "w") as output:
             output.write(json.dumps(new_case_data))
 
-    clear_cloudfront_cache()
-    return "Update succeeded"
+    return "New Case Update Succeeded"
 
 
 @app.route("/dummy")
