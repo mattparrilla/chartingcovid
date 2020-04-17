@@ -30,6 +30,8 @@ def write_dict_to_gzipped_json(data, output_filename):
     return output_filename
 
 
+# For local development, uncomment app.route and index, and comment out
+# app.schedule and case_data
 # @app.route('/')
 # def index():
 @app.schedule(Rate(4, unit=Rate.HOURS))
@@ -65,16 +67,18 @@ def case_data(event):
             separator="/tmp")
         print("Uploaded case data")
         print("time delta: {}".format((datetime.now() - start).seconds))
+        clear_cloudfront_cache()
+        print("Cache cleared")
     else:
         with open("../data/covid_data.json", "w") as output:
             output.write(json.dumps(case_data))
 
-    clear_cloudfront_cache()
-    print("Cache cleared")
     print("time delta: {}".format((datetime.now() - start).seconds))
     return "Case Update Succeeded"
 
 
+# For local development, uncomment app.route and index, and comment out
+# app.schedule and new_case_data
 # @app.route('/')
 # def index():
 @app.schedule(Rate(4, unit=Rate.HOURS))
