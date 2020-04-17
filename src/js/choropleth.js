@@ -116,7 +116,7 @@ async function countyMouseOut() {
 }
 
 function calculateExtent(data) {
-  return d3.extent((Object.values(data)).map(c => c.per_capita !== 0 ? Math.log(c.per_capita) : 0));
+  return d3.extent((Object.values(data)).filter(d => d.per_capita).map(d => Math.log(d.per_capita)));
 }
 
 async function drawLegend() {
