@@ -59,7 +59,8 @@ def generate_new_case_data(input_data: list, minimum_case_count: int,
             # graph look odd.
             latest_increase = 0
             for i in range(len(increases)):
-                if i > 0:
+                increase = increases[i]
+                if increase > 0:
                     latest_increase = i
                     break
             output_data[fips] = increases[latest_increase:]
