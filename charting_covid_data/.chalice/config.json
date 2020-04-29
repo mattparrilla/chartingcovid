@@ -7,8 +7,13 @@
     }
   },
   "lambda_functions": {
+    "new_case_data": {
+      "lambda_timeout": 600,
+      "lambda_memory_size": 999
+    },
     "case_data": {
-      "lambda_timeout": 120
+      "lambda_timeout": 600,
+      "lambda_memory_size": 999
     }
   }
 }

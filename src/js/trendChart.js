@@ -81,7 +81,7 @@ export async function updateTrendChart() {
   const x = getChartX(data);
   const yMax = d3.max(data, d => d[metric]);
   const y = (scale === "log" ? d3.scaleSymlog() : d3.scaleLinear())
-    .domain([d3.min(data, d => d[metric]), yMax]).nice()
+    .domain([0, yMax]).nice()
     .range(yRange);
 
   if (scale === "log") {
