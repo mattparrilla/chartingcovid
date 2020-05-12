@@ -8,7 +8,7 @@ const yRange = [height - margin.bottom, margin.top];
 // Munge the chart data we care about
 async function getTrendChartData() {
   const dates = (await window.dataManager.getDates()).reverse();
-  const numDays = 30;
+  const numDays = 31;
   const sliceAt = Math.max(dates.length - numDays, 1);
 
   // if no fips, we want whole country
@@ -21,16 +21,20 @@ async function getTrendChartData() {
       return populationSum + statePopulation;
     }, Promise.resolve(0));
 
-    // for each date, sum each states casese
+    let lastDaysCases = 0;
+    // for each date, sum each states cases
     return Promise.all(dates.map(async date => {
       const cases = await states.reduce(async (countryCases, { fips: stateFips }) => {
         const casesSum = await countryCases;
         const stateCases = await window.dataManager.getCasesGivenDateFips(date, stateFips);
         return casesSum + (stateCases || 0);
       }, Promise.resolve(0));
+      const newCases = cases - lastDaysCases;
+      lastDaysCases = cases;
       return Promise.resolve({
         date,
         cases,
+        newCases,
         casesPerCapita: cases / countryPopulation
       });
     }).slice(sliceAt));
@@ -39,16 +43,21 @@ async function getTrendChartData() {
   // Get data by FIPS
   const fips = await window.locationManager.getCountyFips()
     || await window.locationManager.getStateFips();
+  let lastDaysCases = 0;
   return Promise.all(dates.map(async date => {
     const cases = await window.dataManager.getCasesGivenDateFips(date, fips) || 0;
     const population = await window.dataManager.getPopulation(fips);
+    const newCases = cases - lastDaysCases;
+    lastDaysCases = cases;
     return Promise.resolve({
       date,
       cases,
+      newCases,
       cases_per_capita: cases / population
     });
   }).slice(sliceAt));
 }
+
 
 // given our chart's data generate an X scale
 function getChartX(data) {
@@ -119,7 +128,7 @@ export default async function initTrendChart() {
 
   const x = getChartX(chartData);
   const y = d3.scaleLinear()
-      .domain([d3.min(chartData, d => d.cases), d3.max(chartData, d => d.cases)]).nice()
+      .domain([d3.min(chartData, d => d.newCases), d3.max(chartData, d => d.newCases)]).nice()
       .range(yRange);
 
   const svg = d3.select("#js_trend_chart")
@@ -131,8 +140,8 @@ export default async function initTrendChart() {
     .data(chartData)
     .join("rect")
       .attr("x", (d, i) => x(i))
-      .attr("y", d => y(d.cases))
-      .attr("height", d => y(0) - y(d.cases))
+      .attr("y", d => y(d.newCases))
+      .attr("height", d => y(0) - y(d.newCases))
       .attr("width", x.bandwidth());
 
   svg.append("g")
@@ -160,6 +169,7 @@ export default async function initTrendChart() {
 
   const chartTitleMap = {
     cases: "Confirmed Cases",
+    newCases: "New Cases",
     cases_per_capita: "Confirmed Cases Per Capita",
     growth_factor: "Growth Factor",
   };
