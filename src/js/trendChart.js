@@ -87,6 +87,8 @@ export async function updateTrendChart() {
   const { metric, scale } = document
     .querySelectorAll("#js_chart_scale_selector .active")[0].dataset;
 
+
+
   const x = getChartX(data);
   const yMax = d3.max(data, d => d[metric]);
   const y = (scale === "log" ? d3.scaleSymlog() : d3.scaleLinear())
@@ -176,10 +178,12 @@ export default async function initTrendChart() {
 
   // Update chart scale on selection
   const metrics = document.querySelectorAll("#js_chart_scale_selector span");
+  const label = document.getElementById("js_trend_chart_metric");
   metrics.forEach(metric => {
     metric.addEventListener("click", () => {
       metrics.forEach(el => el.classList.remove("active"));
       metric.classList.add("active");
+      label.innerHTML = chartTitleMap[metric.dataset.metric];
 
       updateTrendChart();
     });
