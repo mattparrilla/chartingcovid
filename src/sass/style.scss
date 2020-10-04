@@ -6,6 +6,13 @@
 @use "line_chart";
 @use "location_selectors";
 
+.alert {
+  padding: 1rem 2rem;
+  border: 2px solid rgb(253, 208, 162);
+  border-radius: 3px;
+  background: rgb(255, 245, 235);
+}
+
 html {
   font-family: proxima-nova, sans-serif;
   font-weight: 400;
